@@ -134,7 +134,7 @@ export const stopDevelopmentServer = async (): Promise<void> => {
  */
 export class DebugCodeLensProvider implements CodeLensProvider {
   private codeLenses: CodeLens[] = [];
-  private regex: RegExp = /(.+)/g;
+  private regex: RegExp = /Response\s*onRequest\(RequestContext .*?\)\s*{/g;
 
   private _onDidChangeCodeLenses: EventEmitter<void> = new EventEmitter<void>();
   public readonly onDidChangeCodeLenses: Event<void> =
@@ -188,6 +188,25 @@ export class DebugCodeLensProvider implements CodeLensProvider {
 
     codeLens.command = {
       title: "Debug",
+      tooltip: "Starts a development server",
+      command: "extension.start-development-server",
+      // TODO(alestiago): Pass the document URI to open server with route.
+    };
+    return codeLens;
+  }
+}
+
+export class RunCodeLensProvider extends DebugCodeLensProvider {
+  resolveCodeLens?(
+    codeLens: CodeLens,
+    token: CancellationToken
+  ): ProviderResult<CodeLens> {
+    if (!this._hasEnabledCodeLenses()) {
+      return undefined;
+    }
+
+    codeLens.command = {
+      title: "Run",
       tooltip: "Starts a development server",
       command: "extension.start-development-server",
       // TODO(alestiago): Pass the document URI to open server with route.
