@@ -5,6 +5,8 @@ import {
   newMiddleware,
   updateCLI,
   create,
+  startDevelopmentServer,
+  stopDevelopmentServer,
 } from "./commands";
 import {
   readDartFrogCLIVersion,
@@ -41,7 +43,15 @@ export function activate(
     vscode.commands.registerCommand("extension.install-cli", installCLI),
     vscode.commands.registerCommand("extension.update-cli", updateCLI),
     vscode.commands.registerCommand("extension.new-route", newRoute),
-    vscode.commands.registerCommand("extension.new-middleware", newMiddleware)
+    vscode.commands.registerCommand("extension.new-middleware", newMiddleware),
+    vscode.commands.registerCommand(
+      "extension.start-development-server",
+      startDevelopmentServer
+    ),
+    vscode.commands.registerCommand(
+      "extension.stop-development-server",
+      stopDevelopmentServer
+    )
   );
   return context;
 }
