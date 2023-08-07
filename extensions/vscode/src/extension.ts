@@ -7,6 +7,7 @@ import {
   create,
   startDevelopmentServer,
   stopDevelopmentServer,
+  DebugCodeLensProvider,
 } from "./commands";
 import {
   readDartFrogCLIVersion,
@@ -37,6 +38,10 @@ export function activate(
   } else {
     ensureCompatibleCLI();
   }
+
+  // TODO(alestiago): Specify a better document selector, that only applies to
+  // Dart files under routes in a Dart Frog project.
+  vscode.languages.registerCodeLensProvider("*", new DebugCodeLensProvider());
 
   context.subscriptions.push(
     vscode.commands.registerCommand("extension.create", create),

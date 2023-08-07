@@ -22,6 +22,10 @@ Dart Frog can be installed from the [VS Code Marketplace](https://marketplace.vi
 
 ![demonstration](https://raw.githubusercontent.com/VeryGoodOpenSource/dart_frog/main/extensions/vscode/assets/new-route-middleware-usage.gif)
 
+## Configuration
+
+TODO(alestiago): Add details about CodeLens enable/disable.
+
 [ci_link]: https://github.com/VeryGoodOpenSource/dart_frog/actions/workflows/main.yaml
 [dart_frog_link_light]: https://github.com/verygoodopensource/dart_frog
 [license_link]: https://opensource.org/licenses/MIT
