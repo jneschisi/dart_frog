@@ -1,6 +1,6 @@
-import { Duplex, Readable, Stream, Transform } from "node:stream";
+import { Transform } from "node:stream";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
-import { DaemonMessage, DaemonMessageName, DaemonRequest } from ".";
+import { DaemonMessageName, DaemonRequest } from ".";
 
 /**
  * The Dart Frog Daemon is a long-running process that is responsible for
@@ -9,13 +9,17 @@ import { DaemonMessage, DaemonMessageName, DaemonRequest } from ".";
 export class DartFrogDaemon {
   private process: ChildProcessWithoutNullStreams;
 
+  private _isReady: boolean = false;
+
   /**
    * Whether the Dart Frog Daemon is ready to accept requests.
    *
    * The Dart Frog Daemon is ready to accept requests when it has emmitted
    * the "ready" event.
    */
-  private isReady: boolean = false;
+  public get isReady(): boolean {
+    return this._isReady;
+  }
 
   /**
    * The number of requests that have been sent to the Dart Frog Daemon.
@@ -41,7 +45,7 @@ export class DartFrogDaemon {
   private readyListener(data: any): void {
     const event = JSON.parse(data)[0];
     if (!this.isReady && event.event === DaemonMessageName.ready) {
-      this.isReady = true;
+      this._isReady = true;
       this.process.stdout.removeListener("data", this.readyListener);
     }
   }
@@ -56,9 +60,16 @@ export class DartFrogDaemon {
   /**
    * Sends a request to the Dart Frog Daemon.
    *
+   * If the Dart Frog Daemon is not ready to accept requests, this method
+   * will do nothing.
+   *
    * @param request The request to send to the Dart Frog Daemon.
    */
   public send(request: DaemonRequest): void {
+    if (!this.isReady) {
+      return;
+    }
+
     this.process.stdin.write(`${JSON.stringify([request])}\n`);
   }
 

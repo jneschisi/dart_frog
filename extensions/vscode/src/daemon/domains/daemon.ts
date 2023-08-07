@@ -1,4 +1,4 @@
-import { DaemonEvent, DaemonRequest } from "../protocol";
+import { DaemonRequest } from "../protocol";
 
 const domainName = "daemon";
 
@@ -16,8 +16,7 @@ export class RequestVersion extends DaemonRequest {
 
   public readonly method: string = DaemonMessageName.requestVersion;
   public readonly id: string;
-  public readonly domain: string = domainName;
-  public readonly params: Map<string, any> | undefined = undefined;
+  public readonly params: Object | undefined = undefined;
 }
 
 export class Kill extends DaemonRequest {
@@ -28,6 +27,5 @@ export class Kill extends DaemonRequest {
 
   public readonly method: string = DaemonMessageName.kill;
   public readonly id: string;
-  public readonly domain: string = domainName;
-  public readonly params: Map<string, any> | undefined = undefined;
+  public readonly params: Object | undefined = undefined;
 }
