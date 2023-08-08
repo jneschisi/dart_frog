@@ -7,8 +7,6 @@ import {
   create,
   startDevelopmentServer,
   stopDevelopmentServer,
-  DebugCodeLensProvider,
-  RunCodeLensProvider,
 } from "./commands";
 import {
   readDartFrogCLIVersion,
@@ -18,6 +16,7 @@ import {
   readLatestDartFrogCLIVersion,
   suggestInstallingDartFrogCLI,
 } from "./utils";
+import { DebugCodeLensProvider, RunCodeLensProvider } from "./code-lens";
 
 /**
  * This method is called when the extension is activated.
