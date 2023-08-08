@@ -1,3 +1,5 @@
+// TODO(alestiago): Define a manager or so to keep track of all the
+// applications.
 /**
  * Represents the metadata associated to a Dart Frog application.
  */
