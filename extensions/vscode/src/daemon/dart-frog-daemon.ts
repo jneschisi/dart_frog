@@ -207,4 +207,7 @@ export class DartFrogDaemon {
   public removeListener(listener: (data: any) => void): void {
     this.process!.stdout.removeListener("data", listener);
   }
+
+  // TODO(alestiago): Consider adding a method to ping the Dart Frog Daemon and
+  // check if it is still alive.
 }

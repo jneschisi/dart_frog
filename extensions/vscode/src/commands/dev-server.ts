@@ -15,6 +15,8 @@ import {
   isDeamonEvent,
 } from "../daemon";
 
+// TODO(alestiago): Rename file to match with command name.
+// TODO(alestiago): Consider renaming to startDevServer.
 export const startDevelopmentServer = async (): Promise<void> => {
   const dartExtension = extensions.getExtension("Dart-Code.dart-code");
   if (!dartExtension) {
@@ -33,13 +35,6 @@ export const startDevelopmentServer = async (): Promise<void> => {
       await dartExtension.activate();
     });
   }
-
-  // const stopDevelopmentServerTaskName = "Dart Frog: Stop Development Server";
-  // const stopDevelopmentServerTaskProvider = {};
-  // const stopDevelopmentServerTask = tasks.registerTaskProvider(
-  //   stopDevelopmentServerTaskName,
-  //   stopDevelopmentServerTaskProvider
-  // );
 
   const workingDirectoryPath = workspace.workspaceFolders?.[0].uri.fsPath;
   if (workingDirectoryPath === undefined) {
@@ -134,4 +129,5 @@ function attachToDebugSession(vmServiceUri: string): void {
   });
 }
 
+// TODO(alestiago): Refactor to have one command per file.
 export const stopDevelopmentServer = async (): Promise<void> => {};
