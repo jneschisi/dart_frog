@@ -62,6 +62,7 @@ export const startDevelopmentServer = async (): Promise<void> => {
   const dartVmServicePort = port + 1;
 
   const vmServiceUriListener = dartFrogDaemon.addListener((message) => {
+    // TODO(alestiago): also check for the request id.
     if (
       isDeamonEvent(message) &&
       message.event === DevServerMessageName.loggerInfo
@@ -86,6 +87,7 @@ export const startDevelopmentServer = async (): Promise<void> => {
   });
 
   const startProcessCompleteListener = dartFrogDaemon.addListener((message) => {
+    // TODO(alestiago): also check for the request id.
     if (
       isDeamonEvent(message) &&
       message.event === DevServerMessageName.progressComplete
