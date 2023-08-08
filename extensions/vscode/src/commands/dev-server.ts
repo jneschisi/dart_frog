@@ -107,7 +107,7 @@ export const startDevelopmentServer = async (): Promise<void> => {
   });
 
   const startMessage = new Start(
-    dartFrogDaemon.generateRequestId(),
+    dartFrogDaemon.identifierGenerator.generate(),
     dartFrogProjectPath,
     port,
     dartVmServicePort

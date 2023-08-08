@@ -4,10 +4,9 @@ import {
   DaemonMessage,
   DaemonMessageName,
   DaemonRequest,
-  DeamonResponse,
-  DeamonEvent,
   isDeamonEvent,
 } from ".";
+import { IncrementalIdentifierGenerator } from "../utils";
 
 /**
  * The Dart Frog Daemon is a long-running process that is responsible for
@@ -16,6 +15,11 @@ import {
 export class DartFrogDaemon {
   private static _instance: DartFrogDaemon;
 
+  /**
+   * A singleton instance of the Dart Frog Daemon.
+   *
+   * A Dart Frog Deamon can manage multiple Dart Frog projects simultaneously.
+   */
   public static get instance() {
     return this._instance || (this._instance = new this());
   }
@@ -35,11 +39,10 @@ export class DartFrogDaemon {
   }
 
   /**
-   * The number of requests that have been sent to the Dart Frog Daemon.
-   *
-   * This is used to generate unique request IDs.
+   * Generates unique identifiers for requests.
    */
-  private requestCounter: bigint = 0n;
+  public identifierGenerator: IncrementalIdentifierGenerator =
+    new IncrementalIdentifierGenerator();
 
   /**
    * Invokes the Dart Frog Daemon.
@@ -115,15 +118,6 @@ export class DartFrogDaemon {
     }
 
     return deamonMessages;
-  }
-
-  /**
-   * Generates a unique request ID.
-   */
-  public generateRequestId(): string {
-    // TODO(alestiago): Move this to another class, maybe
-    // RequestIdentifierGenerator and RequestIdentifierAscendingGenerator.
-    return (this.requestCounter++).toString();
   }
 
   /**
