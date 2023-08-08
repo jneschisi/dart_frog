@@ -1,7 +1,7 @@
 /**
  * Represents the metadata associated to a Dart Frog application.
  */
-class DartFrogApplication {
+export class DartFrogApplication {
   // TODO(alestiago): Include constructor that finds available ports.
   constructor(port: number, vmServicePort: number, projectPath: string) {
     this.port = port;
