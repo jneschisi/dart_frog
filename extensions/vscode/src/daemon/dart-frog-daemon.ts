@@ -118,7 +118,6 @@ export class DartFrogDaemon {
     const readyListener = (data: any) => {
       const messages = DartFrogDaemon.decodeMessages(data);
       for (const message of messages) {
-        const foo = isDeamonEvent(message);
         if (
           !this._isReady &&
           isDeamonEvent(message) &&
