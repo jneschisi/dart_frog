@@ -86,7 +86,7 @@ export class DartFrogDaemon {
    * Should not be used as a request counter, since it is not guaranteed to
    * be called the same number of times as the number of requests sent.
    */
-  public identifierGenerator: IncrementalIdentifierGenerator =
+  public readonly identifierGenerator: IncrementalIdentifierGenerator =
     new IncrementalIdentifierGenerator();
 
   /**
