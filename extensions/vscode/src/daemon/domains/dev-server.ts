@@ -8,6 +8,10 @@ export enum DevServerMessageName {
   stop = `${domainName}.stop`,
   applicationStarting = `${domainName}.applicationStarting`,
   applicationExit = `${domainName}.applicationExit`,
+  loggerInfo = `${domainName}.loggerInfo`,
+  loggerDetail = `${domainName}.loggerDetail`,
+  progressStart = `${domainName}.progressStart`,
+  progressComplete = `${domainName}.progressComplete`,
 }
 
 export class Start extends DaemonRequest {

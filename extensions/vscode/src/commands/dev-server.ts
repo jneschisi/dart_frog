@@ -1,16 +1,8 @@
-const path = require("path");
-import { spawn } from "child_process";
 import {
-  Uri,
   window,
   extensions,
   ProgressOptions,
-  debug,
-  tasks,
-  Task,
-  CustomExecution,
   workspace,
-  commands,
   CodeLensProvider,
   CancellationToken,
   CodeLens,
@@ -18,10 +10,21 @@ import {
   ProviderResult,
   TextDocument,
   EventEmitter,
-  DocumentSelector,
   Position,
+  commands,
+  Uri,
+  debug,
 } from "vscode";
 import { nearestDartFrogProject } from "../utils";
+import {
+  DaemonMessageName,
+  DartFrogDaemon,
+  DevServerMessageName,
+  Start,
+  Stop,
+  isDeamonEvent,
+} from "../daemon";
+import { spawn } from "node:child_process";
 
 export const startDevelopmentServer = async (): Promise<void> => {
   const dartExtension = extensions.getExtension("Dart-Code.dart-code");
@@ -59,74 +62,90 @@ export const startDevelopmentServer = async (): Promise<void> => {
     return;
   }
 
-  const dartFrogDaemon = spawn("dart_frog", ["daemon"], {
-    cwd: dartFrogProjectPath,
-  });
-  // TODO(alestiago): Prompt for port and dartVmServicePort.
-  const port = 8229;
-  const dartVmServicePort = port + 1;
-  // TODO(alestiago): Refactor deamon logic.
-  dartFrogDaemon.stdout.on("data", (data: any) => {
-    // TODO(alestiago): Listen for a dev_server.loggerInfo
-    // Parse: The Dart VM service is listening on http://127.0.0.1:8182/5WJMWSTcLQg=/
-    const event = JSON.parse(data)[0];
-    if (event.event === "daemon.ready") {
-      window.showInformationMessage(`Dart Frog daemon ready!`);
-      const startMessage = {
-        id: "1",
-        method: "dev_server.start",
-        params: {
-          workingDirectory: dartFrogProjectPath,
-          port: port,
-          dartVmServicePort: dartVmServicePort,
-        },
-      };
-      const message = JSON.stringify([startMessage]);
-      dartFrogDaemon.stdin.write(`${message}\n`);
-      window.showInformationMessage(`Starting server...`);
-    }
+  const dartFrogDaemon = DartFrogDaemon.instance;
+  if (!dartFrogDaemon.isReady) {
+    const options: ProgressOptions = {
+      location: 15,
+      title: `Starting Dart Frog daemon...`,
+    };
+    await window.withProgress(options, async function () {
+      await dartFrogDaemon.invoke(dartFrogProjectPath);
+    });
+  }
 
-    if (event.event === "dev_server.loggerInfo") {
-      const message = event.params.message as String;
-      if (message.startsWith("The Dart VM service is listening on ")) {
-        const vmServiceUri = message.substring(
-          "The Dart VM service is listening on ".length
+  // TODO(alestiago): Prompt for port and dartVmServicePort.
+  const port = 8373;
+  const dartVmServicePort = port + 1;
+
+  const vmServiceUriListener = dartFrogDaemon.addListener((message) => {
+    if (
+      isDeamonEvent(message) &&
+      message.event === DevServerMessageName.loggerInfo
+    ) {
+      if (!message.params) {
+        return;
+      }
+
+      const content = message.params.message;
+      const vmServiceUriMessagePrefix = "The Dart VM service is listening on ";
+      if (content.startsWith(vmServiceUriMessagePrefix)) {
+        // TODO(alestiago): Provide a DevServerManager that stores the running
+        // applications id, port, vmServiceUri, etc.
+        const vmServiceUri = content.substring(
+          vmServiceUriMessagePrefix.length
         );
-        window.showInformationMessage(`Starting development server...`);
-        debug.startDebugging(undefined, {
-          name: "Dart Frog: Development Server",
-          request: "attach",
-          type: "dart",
-          vmServiceUri: vmServiceUri,
-        });
+        attachToDebugSession(vmServiceUri);
+        // TODO(alestiago): Check if the listener is actually removed.
+        dartFrogDaemon.removeListener(vmServiceUriListener);
       }
     }
+  });
 
-    if (event.event === "dev_server.progressComplete") {
-      // TODO(alestiago): Parse message instead of localhost
+  const startProcessCompleteListener = dartFrogDaemon.addListener((message) => {
+    if (
+      isDeamonEvent(message) &&
+      message.event === DevServerMessageName.progressComplete
+    ) {
+      // TODO(alestiago): Actually parse the URI instead of composing it.
       setTimeout(() => {
         commands.executeCommand(
           "vscode.open",
           Uri.parse(`http://localhost:${port}/`)
         );
       }, 5000);
+      dartFrogDaemon.removeListener(startProcessCompleteListener);
     }
   });
-  dartFrogDaemon.stderr.on("data", (data: any) => {
-    window.showErrorMessage(`stderr: ${data}`);
-  });
-  dartFrogDaemon.on("close", (code: any) => {
-    window.showInformationMessage(`Dart Frog daemon exited with code ${code}`);
-  });
+
+  const startMessage = new Start(
+    dartFrogDaemon.generateRequestId(),
+    dartFrogProjectPath,
+    port,
+    dartVmServicePort
+  );
+  dartFrogDaemon.send(startMessage);
 
   debug.onDidTerminateDebugSession(() => {
-    dartFrogDaemon.kill();
+    // TODO(alestiago): Stop the development server.
   });
 };
 
-export const stopDevelopmentServer = async (): Promise<void> => {
-  window.showInformationMessage("Stopping development server...");
-};
+function attachToDebugSession(vmServiceUri: string): void {
+  const options: ProgressOptions = {
+    location: 15,
+    title: `Attaching to debug session...`,
+  };
+  window.withProgress(options, async function () {
+    return await debug.startDebugging(undefined, {
+      name: "Dart Frog: Development Server",
+      request: "attach",
+      type: "dart",
+      vmServiceUri: vmServiceUri,
+    });
+  });
+}
+
+export const stopDevelopmentServer = async (): Promise<void> => {};
 
 /**
  * Shows a "Debug" code lens on the top of the route handlers, which allows

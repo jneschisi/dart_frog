@@ -1,13 +1,26 @@
 import { Transform } from "node:stream";
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
-import { DaemonMessageName, DaemonRequest } from ".";
+import {
+  DaemonMessage,
+  DaemonMessageName,
+  DaemonRequest,
+  DeamonResponse,
+  DeamonEvent,
+  isDeamonEvent,
+} from ".";
 
 /**
  * The Dart Frog Daemon is a long-running process that is responsible for
  * managing a single or multiple Dart Frog projects simultaneously.
  */
 export class DartFrogDaemon {
-  private process: ChildProcessWithoutNullStreams;
+  private static _instance: DartFrogDaemon;
+
+  public static get instance() {
+    return this._instance || (this._instance = new this());
+  }
+
+  private process: ChildProcessWithoutNullStreams | undefined;
 
   private _isReady: boolean = false;
 
@@ -28,32 +41,88 @@ export class DartFrogDaemon {
    */
   private requestCounter: bigint = 0n;
 
-  constructor() {
-    // TODO(alestiago): Consider adding logic to check if the Dart Frog CLI
-    // is installed and if not, install it.
-    this.process = spawn("dart", ["bin/main.dart"]);
+  /**
+   * Invokes the Dart Frog Daemon.
+   *
+   * If the Dart Frog Daemon is already running, this method will immediately
+   * return.
+   *
+   * @param workingDirectory
+   * @returns True if the Dart Frog Daemon was successfully invoked.
+   */
+  public async invoke(workingDirectory: string): Promise<void> {
+    if (this.isReady) {
+      return Promise.resolve();
+    }
 
-    // TODO(alestiago): Evaluate if we need to explicitly set the encoding or
-    // if we can just use the default encoding.
-    this.process.stdout.setEncoding("utf8");
-    const readyListener = this.process.stdout.on(
-      "data",
-      this.readyListener.bind(this)
-    );
+    this.process = spawn("dart_frog", ["daemon"], {
+      cwd: workingDirectory,
+    });
+
+    let resolveReadyPromise: () => void;
+    const readyPromise = new Promise<void>((resolve) => {
+      resolveReadyPromise = resolve;
+    });
+
+    const readyListener = (data: any) => {
+      const messages = DartFrogDaemon.decodeMessages(data);
+      for (const message of messages) {
+        const foo = isDeamonEvent(message);
+        if (
+          !this._isReady &&
+          isDeamonEvent(message) &&
+          message.event === DaemonMessageName.ready
+        ) {
+          this._isReady = true;
+          resolveReadyPromise();
+          this.process!.stdout.removeListener("data", readyListener);
+        }
+      }
+    };
+    this.process.stdout.addListener("data", readyListener);
+
+    return readyPromise;
   }
 
-  private readyListener(data: any): void {
-    const event = JSON.parse(data)[0];
-    if (!this.isReady && event.event === DaemonMessageName.ready) {
-      this._isReady = true;
-      this.process.stdout.removeListener("data", this.readyListener);
+  public addListener(
+    callback: (message: DaemonMessage) => void
+  ): (data: any) => void {
+    const decodingListener = (data: any) => {
+      const messages = DartFrogDaemon.decodeMessages(data);
+      for (const message of messages) {
+        callback(message);
+      }
+    };
+
+    this.process!.stdout.addListener("data", decodingListener);
+    return decodingListener;
+  }
+
+  public removeListener(listener: (data: any) => void): void {
+    this.process!.stdout.removeListener("data", listener);
+  }
+
+  private static decodeMessages(data: Buffer): DaemonMessage[] {
+    const stringData = data.toString();
+    const messages = stringData.split("\n").filter((s) => s.trim().length > 0);
+    const parsedMessages = messages.map((message) => JSON.parse(message));
+
+    let deamonMessages: DaemonMessage[] = [];
+    for (const parsedMessage of parsedMessages) {
+      for (const message of parsedMessage) {
+        deamonMessages.push(message as DaemonMessage);
+      }
     }
+
+    return deamonMessages;
   }
 
   /**
    * Generates a unique request ID.
    */
   public generateRequestId(): string {
+    // TODO(alestiago): Move this to another class, maybe
+    // RequestIdentifierGenerator and RequestIdentifierAscendingGenerator.
     return (this.requestCounter++).toString();
   }
 
@@ -65,41 +134,14 @@ export class DartFrogDaemon {
    *
    * @param request The request to send to the Dart Frog Daemon.
    */
-  public send(request: DaemonRequest): void {
-    if (!this.isReady) {
+  public send(request: DaemonRequest): void | Transform {
+    // TODO(alestiago): Check if ready.
+    if (!this.process) {
       return;
     }
 
-    this.process.stdin.write(`${JSON.stringify([request])}\n`);
-  }
-
-  /**
-   * Listens to messages from a specific request.
-   *
-   * This method returns a Transform stream that filters out messages that
-   * do not match the request ID.
-   *
-   * Make sure to call `end()` on the returned stream when you are done
-   * listening to the request, since the Transform will not end on its own.
-   *
-   * @param id The ID of the request to listen to.
-   * @returns A Transform stream that filters out messages that do not match
-   * the request ID and parses the JSON.
-   */
-  public addListener(id: string): Transform {
-    return this.process.stdout.pipe(
-      new Transform({
-        objectMode: true,
-        encoding: "utf8",
-        transform: (chunk, _, callback) => {
-          // TODO(alestiago): Double check that messages usually have a single
-          // element in the array.
-          const message = JSON.parse(chunk.toString())[0];
-          if (message.id === id) {
-            callback(null, message);
-          }
-        },
-      })
-    );
+    // TODO(alestiago): Handle daemon connection lost.
+    const encodedRequest = `${JSON.stringify([request])}\n`;
+    this.process.stdin.write(encodedRequest);
   }
 }
