@@ -5,7 +5,7 @@ import {
   newMiddleware,
   updateCLI,
   create,
-  startDevelopmentServer,
+  startDevServer,
   stopDevelopmentServer,
 } from "./commands";
 import {
@@ -52,7 +52,7 @@ export function activate(
     vscode.commands.registerCommand("extension.new-middleware", newMiddleware),
     vscode.commands.registerCommand(
       "extension.start-development-server",
-      startDevelopmentServer
+      startDevServer
     ),
     vscode.commands.registerCommand(
       "extension.stop-development-server",

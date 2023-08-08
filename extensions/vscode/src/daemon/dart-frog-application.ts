@@ -1,7 +1,7 @@
 /**
  * Represents the metadata associated to a Dart Frog application.
  */
-export class DartFrogApplication {
+class DartFrogApplication {
   // TODO(alestiago): Include constructor that finds available ports.
   constructor(port: number, vmServicePort: number, projectPath: string) {
     this.port = port;
@@ -21,9 +21,6 @@ export class DartFrogApplication {
 
   /**
    * The root path to the application's project directory.
-   *
-   * @see {@link nearestDartFrogProject}, to find the root of a Dart Frog
-   * project from a file path.
    */
   public readonly projectPath: string;
 

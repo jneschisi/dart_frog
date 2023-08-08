@@ -15,9 +15,7 @@ import {
   isDeamonEvent,
 } from "../daemon";
 
-// TODO(alestiago): Rename file to match with command name.
-// TODO(alestiago): Consider renaming to startDevServer.
-export const startDevelopmentServer = async (): Promise<void> => {
+export const startDevServer = async (): Promise<void> => {
   const dartExtension = extensions.getExtension("Dart-Code.dart-code");
   if (!dartExtension) {
     window.showErrorMessage(
@@ -58,14 +56,20 @@ export const startDevelopmentServer = async (): Promise<void> => {
   }
 
   // TODO(alestiago): Prompt for port and dartVmServicePort.
-  const port = 8373;
+  const port = 8376;
   const dartVmServicePort = port + 1;
+  const startMessage = new Start(
+    dartFrogDaemon.identifierGenerator.generate(),
+    dartFrogProjectPath,
+    port,
+    dartVmServicePort
+  );
 
   const vmServiceUriListener = dartFrogDaemon.addListener((message) => {
-    // TODO(alestiago): also check for the request id.
     if (
       isDeamonEvent(message) &&
-      message.event === DevServerMessageName.loggerInfo
+      message.event === DevServerMessageName.loggerInfo &&
+      message.params.requestId === startMessage.id
     ) {
       if (!message.params) {
         return;
@@ -87,10 +91,10 @@ export const startDevelopmentServer = async (): Promise<void> => {
   });
 
   const startProcessCompleteListener = dartFrogDaemon.addListener((message) => {
-    // TODO(alestiago): also check for the request id.
     if (
       isDeamonEvent(message) &&
-      message.event === DevServerMessageName.progressComplete
+      message.event === DevServerMessageName.progressComplete &&
+      message.params.requestId === startMessage.id
     ) {
       // TODO(alestiago): Actually parse the URI instead of composing it.
       setTimeout(() => {
@@ -103,12 +107,6 @@ export const startDevelopmentServer = async (): Promise<void> => {
     }
   });
 
-  const startMessage = new Start(
-    dartFrogDaemon.identifierGenerator.generate(),
-    dartFrogProjectPath,
-    port,
-    dartVmServicePort
-  );
   dartFrogDaemon.send(startMessage);
 
   debug.onDidTerminateDebugSession(() => {
@@ -130,6 +128,3 @@ function attachToDebugSession(vmServiceUri: string): void {
     });
   });
 }
-
-// TODO(alestiago): Refactor to have one command per file.
-export const stopDevelopmentServer = async (): Promise<void> => {};
