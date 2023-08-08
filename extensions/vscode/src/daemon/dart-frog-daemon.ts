@@ -132,7 +132,36 @@ export class DartFrogDaemon {
     };
     this.process.stdout.addListener("data", readyListener);
 
+    // TODO(alestiago): Consider adding a timeout limit.
     return readyPromise;
+  }
+
+  /**
+   * Sends a request to the Dart Frog Daemon.
+   *
+   * If the Dart Frog Daemon is not ready to accept requests, this method
+   * will do nothing.
+   *
+   * @param request The request to send to the Dart Frog Daemon.
+   * @throws {DartFrogDaemonWaiveError} If the Dart Frog Daemon has not yet
+   * been {@link invoke}d.
+   * @throws {DartFrogDaemonReadyError} If the Dart Frog Daemon is not yet
+   * ready to accept requests.
+   *
+   * @see {@link isReady} to check if the Dart Frog Daemon is ready to accept
+   * requests.
+   */
+  public send(request: DaemonRequest): void {
+    if (!this.process) {
+      throw new DartFrogDaemonWaiveError();
+    }
+    if (!this.isReady) {
+      throw new DartFrogDaemonReadyError();
+    }
+
+    // TODO(alestiago): Handle daemon connection lost.
+    const encodedRequest = `${JSON.stringify([request])}\n`;
+    this.process!.stdin.write(encodedRequest);
   }
 
   /**
@@ -177,33 +206,5 @@ export class DartFrogDaemon {
    */
   public removeListener(listener: (data: any) => void): void {
     this.process!.stdout.removeListener("data", listener);
-  }
-
-  /**
-   * Sends a request to the Dart Frog Daemon.
-   *
-   * If the Dart Frog Daemon is not ready to accept requests, this method
-   * will do nothing.
-   *
-   * @param request The request to send to the Dart Frog Daemon.
-   * @throws {DartFrogDaemonWaiveError} If the Dart Frog Daemon has not yet
-   * been {@link invoke}d.
-   * @throws {DartFrogDaemonReadyError} If the Dart Frog Daemon is not yet
-   * ready to accept requests.
-   *
-   * @see {@link isReady} to check if the Dart Frog Daemon is ready to accept
-   * requests.
-   */
-  public send(request: DaemonRequest): void {
-    if (!this.process) {
-      throw new DartFrogDaemonWaiveError();
-    }
-    if (!this.isReady) {
-      throw new DartFrogDaemonReadyError();
-    }
-
-    // TODO(alestiago): Handle daemon connection lost.
-    const encodedRequest = `${JSON.stringify([request])}\n`;
-    this.process!.stdin.write(encodedRequest);
   }
 }
