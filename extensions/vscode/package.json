@@ -54,11 +54,11 @@
         "title": "Dart Frog: New Middleware"
       },
       {
-        "command": "extension.start-development-server",
+        "command": "dart-frog.start-development-server",
         "title": "Dart Frog: Start Development Server"
       },
       {
-        "command": "extension.stop-development-server",
+        "command": "dart-frog.stop-development-server",
         "title": "Dart Frog: Stop Development Server"
       }
     ],
