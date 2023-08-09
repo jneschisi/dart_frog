@@ -14,7 +14,7 @@ import {
   DartFrogDaemonEventEmitterTypes,
   DeamonEvent,
   DevServerMessageName,
-  Start,
+  StartDaemonRequest,
   isDeamonEvent,
 } from "../daemon";
 
@@ -61,8 +61,8 @@ export const startDevServer = async (): Promise<void> => {
   // TODO(alestiago): Prompt for port and dartVmServicePort.
   const port = 8376;
   const dartVmServicePort = port + 1;
-  const startMessage = new Start(
-    dartFrogDaemon.identifierGenerator.generate(),
+  const startMessage = new StartDaemonRequest(
+    dartFrogDaemon.requestIdentifierGenerator.generate(),
     dartFrogProjectPath,
     port,
     dartVmServicePort

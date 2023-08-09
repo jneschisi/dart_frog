@@ -8,7 +8,7 @@ export enum DaemonMessageName {
   ready = `${domainName}.ready`,
 }
 
-export class RequestVersion extends DaemonRequest {
+export class RequestVersionDaemonRequest extends DaemonRequest {
   constructor(id: string) {
     super();
     this.id = id;
@@ -19,7 +19,7 @@ export class RequestVersion extends DaemonRequest {
   public readonly params: any = undefined;
 }
 
-export class Kill extends DaemonRequest {
+export class KillDaemonRequest extends DaemonRequest {
   constructor(id: string) {
     super();
     this.id = id;

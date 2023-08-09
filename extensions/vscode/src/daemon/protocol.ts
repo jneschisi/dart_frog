@@ -3,7 +3,11 @@ export interface DaemonMessage {}
 export abstract class DaemonRequest implements DaemonMessage {
   abstract method: string;
   abstract id: string;
-  abstract params: Object | undefined;
+  abstract params: any;
+}
+
+export function isDeamonRequest(object: any): object is DaemonRequest {
+  return "method" in object;
 }
 
 export interface DeamonResponse extends DaemonMessage {

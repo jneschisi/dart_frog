@@ -35,7 +35,7 @@ export class DartFrogApplication {
    * It is undefined until the application has been started by the Dart Frog
    * Daemon, and in turn, has been assigned such identifier.
    */
-  public get identifier(): string | undefined {
+  public get id(): string | undefined {
     return this._id;
   }
 
@@ -47,7 +47,7 @@ export class DartFrogApplication {
    *
    * If the application already has an identifier, this method will do nothing.
    */
-  public set identifier(value: string) {
+  public set id(value: string) {
     if (this._id) {
       return;
     }
