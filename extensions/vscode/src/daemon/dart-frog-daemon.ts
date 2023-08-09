@@ -72,6 +72,8 @@ export class DartFrogDaemon {
 
   private _deamonMessagesEventEmitter = new EventEmitter();
 
+  // TODO(alestiago): Consider refactoring to allow filtering of messages by
+  // their names.
   /**
    * An event emitter that emits events upon Dart Frog Daemon communication.
    *
