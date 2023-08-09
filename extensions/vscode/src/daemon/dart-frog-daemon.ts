@@ -1,13 +1,13 @@
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
 import {
   DaemonMessage,
-  DaemonMessageName,
   DaemonRequest,
   DartFrogApplicationRegistry,
   DeamonEvent,
   DeamonResponse,
   isDeamonEvent,
   isDeamonResponse,
+  isReadyDeamonEvent,
 } from ".";
 import { IncrementalIdentifierGenerator } from "../utils";
 import { EventEmitter } from "events";
@@ -161,20 +161,16 @@ export class DartFrogDaemon {
     });
 
     const readyEventListener = (message: DeamonEvent) => {
-      if (!this._isReady && message.event === DaemonMessageName.ready) {
+      if (!this._isReady && isReadyDeamonEvent(message)) {
         this._isReady = true;
         resolveReadyPromise();
         this.off(DartFrogDaemonEventEmitterTypes.event, readyEventListener);
       }
     };
-    try {
-      this.on(
-        DartFrogDaemonEventEmitterTypes.event,
-        readyEventListener.bind(this)
-      );
-    } catch (e) {
-      e;
-    }
+    this.on(
+      DartFrogDaemonEventEmitterTypes.event,
+      readyEventListener.bind(this)
+    );
 
     this.process = spawn("dart_frog", ["daemon"], {
       cwd: workingDirectory,
