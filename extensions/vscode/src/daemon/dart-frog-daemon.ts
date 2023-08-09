@@ -160,22 +160,17 @@ export class DartFrogDaemon {
       resolveReadyPromise = resolve;
     });
 
-    const readyListener = (data: any) => {
-      const messages = DartFrogDaemon.decodeMessages(data);
-      for (const message of messages) {
-        if (
-          !this._isReady &&
-          isDeamonEvent(message) &&
-          message.event === DaemonMessageName.ready
-        ) {
-          this._isReady = true;
-          resolveReadyPromise();
-          this.process!.stdout.removeListener("data", readyListener);
-        }
+    const readyListener = this.addListener((message) => {
+      if (
+        !this._isReady &&
+        isDeamonEvent(message) &&
+        message.event === DaemonMessageName.ready
+      ) {
+        this._isReady = true;
+        resolveReadyPromise();
+        this.removeListener(readyListener);
       }
-    };
-    // TODO(alestiago): Change to use this.addListener.
-    this.process.stdout.addListener("data", readyListener);
+    });
 
     // TODO(alestiago): Consider adding a timeout limit.
     return readyPromise;
