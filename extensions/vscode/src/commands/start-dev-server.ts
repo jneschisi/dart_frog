@@ -10,11 +10,13 @@ import {
 import { nearestDartFrogProject } from "../utils";
 import {
   DaemonMessage,
+  DartFrogApplication,
   DartFrogDaemon,
   DartFrogDaemonEventEmitterTypes,
   DeamonEvent,
   DevServerMessageName,
   StartDaemonRequest,
+  StartDeamonResponse,
   isDeamonEvent,
 } from "../daemon";
 
@@ -59,7 +61,7 @@ export const startDevServer = async (): Promise<void> => {
   }
 
   // TODO(alestiago): Prompt for port and dartVmServicePort.
-  const port = 8376;
+  const port = 8383;
   const dartVmServicePort = port + 1;
   const startMessage = new StartDaemonRequest(
     dartFrogDaemon.requestIdentifierGenerator.generate(),
@@ -68,38 +70,42 @@ export const startDevServer = async (): Promise<void> => {
     dartVmServicePort
   );
 
-  const vmServiceUriEventListener = (message: DeamonEvent) => {
-    if (
-      message.event === DevServerMessageName.loggerInfo &&
-      message.params.requestId === startMessage.id
-    ) {
-      if (!message.params) {
+  const startResponse = (await dartFrogDaemon.send(
+    startMessage
+  )) as StartDeamonResponse;
+
+  let application = dartFrogDaemon.applicationsRegistry.applications.find(
+    (application) => application.id === startResponse.result.applicationId
+  );
+  if (!application) {
+    let resolveApplicationAddedPromise: (
+      application: DartFrogApplication
+    ) => void;
+    const applicationAddedPromise = new Promise<DartFrogApplication>(
+      (resolve) => {
+        resolveApplicationAddedPromise = resolve;
+      }
+    );
+    const applicationAddedEventListener = (
+      application: DartFrogApplication
+    ) => {
+      if (application.id !== startResponse.result.applicationId) {
         return;
       }
+      resolveApplicationAddedPromise(application);
+      dartFrogDaemon.applicationsRegistry.runningApplicationsEventEmitter.off(
+        "add",
+        applicationAddedEventListener
+      );
+    };
+    dartFrogDaemon.applicationsRegistry.runningApplicationsEventEmitter.on(
+      "add",
+      applicationAddedEventListener.bind(this)
+    );
+    application = await applicationAddedPromise;
+  }
 
-      const content = message.params.message;
-      const vmServiceUriMessagePrefix = "The Dart VM service is listening on ";
-      if (content.startsWith(vmServiceUriMessagePrefix)) {
-        // TODO(alestiago): Provide a DevServerManager that stores the running
-        // applications id, port, vmServiceUri, etc.
-        const vmServiceUri = content.substring(
-          vmServiceUriMessagePrefix.length
-        );
-        attachToDebugSession(vmServiceUri);
-        // TODO(alestiago): Check if the listener is actually removed.
-        dartFrogDaemon.off(
-          DartFrogDaemonEventEmitterTypes.event,
-          vmServiceUriEventListener
-        );
-      }
-    }
-  };
-  dartFrogDaemon.on(
-    DartFrogDaemonEventEmitterTypes.event,
-    vmServiceUriEventListener
-  );
-
-  await dartFrogDaemon.send(startMessage);
+  attachToDebugSession(application!.vmServiceUri!);
   setTimeout(() => {
     commands.executeCommand(
       "vscode.open",

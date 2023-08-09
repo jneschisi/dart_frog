@@ -5,7 +5,9 @@ import {
   DeamonEvent,
   StartDaemonRequest,
   isApplicationExitDeamonEvent,
+  isApplicationStartingDeamonEvent,
   isLoggerInfoDeamonEvent,
+  isProgressCompleteDeamonEvent,
   isStartDaemonRequest,
 } from ".";
 import { EventEmitter } from "events";
@@ -27,15 +29,14 @@ export class DartFrogApplicationRegistry {
   constructor(dartFrogDaemon: DartFrogDaemon) {
     this.dartFrogDaemon = dartFrogDaemon;
 
-    // TODO(alestiago): enable listening once implemented.
-    // this.dartFrogDaemon.on(
-    //   DartFrogDaemonEventEmitterTypes.request,
-    //   this.startRequestListener.bind(this)
-    // );
-    // this.dartFrogDaemon.on(
-    //   DartFrogDaemonEventEmitterTypes.event,
-    //   this.applicationExitEventListener.bind(this)
-    // );
+    this.dartFrogDaemon.on(
+      DartFrogDaemonEventEmitterTypes.request,
+      this.startRequestListener.bind(this)
+    );
+    this.dartFrogDaemon.on(
+      DartFrogDaemonEventEmitterTypes.event,
+      this.applicationExitEventListener.bind(this)
+    );
   }
 
   private _runningApplications: DartFrogApplication[] = [];
@@ -83,26 +84,46 @@ export class DartFrogApplicationRegistry {
         application.id = applicationId;
       }
     );
-    const vmServiceUri = this.retrieveVmServiceUri(application).then(
+    const vmServiceUri = this.retrieveVmServiceUri(request.id).then(
       (vmServiceUri) => {
         application.vmServiceUri = vmServiceUri;
       }
     );
-
     await Promise.all([applicationId, vmServiceUri]);
 
     this.register(application);
   }
 
   private async retrieveApplicationId(requestId: string): Promise<string> {
-    // TODO(alestiago): Check for dev_server.progressComplete event.
-    return "";
+    let resolveApplicationId: (vmServiceUri: string) => void;
+    const applicationId = new Promise<string>((resolve) => {
+      resolveApplicationId = resolve;
+    });
+
+    const applicationIdEventListener = (message: DeamonEvent) => {
+      if (!isApplicationStartingDeamonEvent(message)) {
+        return;
+      } else if (message.params.requestId !== requestId) {
+        return;
+      }
+
+      const applicationId = message.params.applicationId;
+      resolveApplicationId(applicationId);
+      this.dartFrogDaemon.off(
+        DartFrogDaemonEventEmitterTypes.event,
+        applicationIdEventListener
+      );
+    };
+    this.dartFrogDaemon.on(
+      DartFrogDaemonEventEmitterTypes.event,
+      applicationIdEventListener.bind(this)
+    );
+
+    return applicationId;
   }
 
   // TODO(alestiago): Consider moving to DartFrogApplication?
-  private async retrieveVmServiceUri(
-    application: DartFrogApplication
-  ): Promise<string> {
+  private async retrieveVmServiceUri(requestId: string): Promise<string> {
     // TODO(alestiago): Consider adding a timeout limit.
     let resolveVmServiceUriPromise: (vmServiceUri: string) => void;
     const vmServiceUriPromise = new Promise<string>((resolve) => {
@@ -114,7 +135,7 @@ export class DartFrogApplicationRegistry {
         return;
       }
 
-      if (message.params.applicationId !== application.id) {
+      if (message.params.requestId !== requestId) {
         return;
       }
 

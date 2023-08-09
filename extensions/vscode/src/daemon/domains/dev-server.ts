@@ -1,5 +1,12 @@
 import exp = require("constants");
-import { DaemonRequest, DeamonEvent, isDeamonEvent, isDeamonRequest } from "..";
+import {
+  DaemonRequest,
+  DeamonEvent,
+  DeamonResponse,
+  isDeamonEvent,
+  isDeamonRequest,
+  isDeamonResponse,
+} from "..";
 
 const domainName = "dev_server";
 
@@ -49,6 +56,20 @@ export function isStartDaemonRequest(
     object.params.workingDirectory !== undefined &&
     object.params.port !== undefined &&
     object.params.dartVmServicePort !== undefined
+  );
+}
+
+export interface StartDeamonResponse extends DeamonResponse {
+  result: {
+    applicationId: string;
+  };
+}
+
+export function isStartDeamonResponse(
+  object: any
+): object is StartDeamonResponse {
+  return (
+    isDeamonResponse(object) && typeof object.result.applicationId === "string"
   );
 }
 
@@ -119,4 +140,45 @@ export function isLoggerInfoDeamonEvent(
   );
 }
 
-// TODO(alestiago): Add dev_server.progressComplete
+export interface ApplicationStartingDeamonEvent extends DeamonEvent {
+  params: {
+    applicationId: string;
+    requestId: string;
+  };
+}
+
+export function isApplicationStartingDeamonEvent(
+  object: any
+): object is ApplicationStartingDeamonEvent {
+  return (
+    isDeamonEvent(object) &&
+    object.event === DevServerMessageName.applicationStarting &&
+    typeof object.params.applicationId === "string" &&
+    typeof object.params.requestId === "string"
+  );
+}
+
+export interface ProgressCompleteDeamonEvent extends DeamonEvent {
+  event: DevServerMessageName.progressComplete;
+  params: {
+    applicationId: string;
+    requestId: string;
+    workingDirectory: string;
+    progressMessage: string;
+    progressId: string;
+  };
+}
+
+export function isProgressCompleteDeamonEvent(
+  object: any
+): object is ProgressCompleteDeamonEvent {
+  return (
+    isDeamonEvent(object) &&
+    object.event === DevServerMessageName.progressComplete &&
+    typeof object.params.applicationId === "string" &&
+    typeof object.params.requestId === "string" &&
+    typeof object.params.workingDirectory === "string" &&
+    typeof object.params.progressMessage === "string" &&
+    typeof object.params.progressId === "string"
+  );
+}
