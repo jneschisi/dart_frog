@@ -87,14 +87,14 @@ export const startDevServer = async (): Promise<void> => {
         );
         attachToDebugSession(vmServiceUri);
         // TODO(alestiago): Check if the listener is actually removed.
-        dartFrogDaemon.deamonMessagesEventEmitter.off(
+        dartFrogDaemon.off(
           DartFrogDaemonEventEmitterTypes.event,
           vmServiceUriEventListener
         );
       }
     }
   };
-  dartFrogDaemon.deamonMessagesEventEmitter.on(
+  dartFrogDaemon.on(
     DartFrogDaemonEventEmitterTypes.event,
     vmServiceUriEventListener
   );

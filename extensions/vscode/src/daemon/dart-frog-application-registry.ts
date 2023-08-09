@@ -27,14 +27,15 @@ export class DartFrogApplicationRegistry {
   constructor(dartFrogDaemon: DartFrogDaemon) {
     this.dartFrogDaemon = dartFrogDaemon;
 
-    this.dartFrogDaemon.deamonMessagesEventEmitter.on(
-      DartFrogDaemonEventEmitterTypes.request,
-      this.startRequestListener.bind(this)
-    );
-    this.dartFrogDaemon.deamonMessagesEventEmitter.on(
-      DartFrogDaemonEventEmitterTypes.event,
-      this.applicationExitEventListener.bind(this)
-    );
+    // TODO(alestiago): enable listening once implemented.
+    // this.dartFrogDaemon.on(
+    //   DartFrogDaemonEventEmitterTypes.request,
+    //   this.startRequestListener.bind(this)
+    // );
+    // this.dartFrogDaemon.on(
+    //   DartFrogDaemonEventEmitterTypes.event,
+    //   this.applicationExitEventListener.bind(this)
+    // );
   }
 
   private _runningApplications: DartFrogApplication[] = [];
@@ -91,10 +92,6 @@ export class DartFrogApplicationRegistry {
     await Promise.all([applicationId, vmServiceUri]);
 
     this.register(application);
-    this.dartFrogDaemon.deamonMessagesEventEmitter.emit(
-      DartFrogDaemonEventEmitterTypes.request,
-      this.startRequestListener
-    );
   }
 
   private async retrieveApplicationId(requestId: string): Promise<string> {
@@ -127,13 +124,13 @@ export class DartFrogApplicationRegistry {
           vmServiceUriMessagePrefix.length
         );
         resolveVmServiceUriPromise(vmServiceUri);
-        this.dartFrogDaemon.deamonMessagesEventEmitter.off(
+        this.dartFrogDaemon.off(
           DartFrogDaemonEventEmitterTypes.event,
           vmServiceUriEventListener
         );
       }
     };
-    this.dartFrogDaemon.deamonMessagesEventEmitter.on(
+    this.dartFrogDaemon.on(
       DartFrogDaemonEventEmitterTypes.event,
       vmServiceUriEventListener.bind(this)
     );

@@ -40,7 +40,6 @@ export enum DartFrogDaemonEventEmitterTypes {
   event = "event",
 }
 
-// TODO(alestiago): Consider subclassing EventEmitter.
 /**
  * The Dart Frog Daemon is a long-running process that is responsible for
  * managing a single or multiple Dart Frog projects simultaneously.
@@ -62,9 +61,9 @@ export class DartFrogDaemon {
   // TODO(alestiago): Consider refactoring to allow filtering of messages by
   // their names.
   /**
-   * An event emitter that emits events upon Dart Frog Daemon communication.
+   * Starts listening to events related to this Dart Frog Daemon.
    *
-   * Events:
+   * The possible types of events are:
    * - "request": When a request is sent to the Dart Frog Daemon, the
    * {@link DaemonRequest} is passed as an argument to the event handler.
    * - "response": When a response is received from the Dart Frog Daemon, the
@@ -72,11 +71,33 @@ export class DartFrogDaemon {
    * - "event": When an event is received from the Dart Frog Daemon, the
    * {@link DaemonMessage} is passed as an argument to the event handler.
    *
+   * @returns A reference to this Dart Frog Daemon, so that calls can be
+   * chained.
    * @see {@link DartFrogDaemonEventEmitterTypes} for the types of events that
    * are emitted.
    */
-  public get deamonMessagesEventEmitter(): EventEmitter {
-    return this._deamonMessagesEventEmitter;
+  public on(
+    type: DartFrogDaemonEventEmitterTypes,
+    listener: (...args: any[]) => void
+  ): DartFrogDaemon {
+    this._deamonMessagesEventEmitter.on(type, listener);
+    return this;
+  }
+
+  /**
+   * Unsubscribes a listener from events related to this Dart Frog Daemon.
+   *
+   * @param type The type of event to unsubscribe from.
+   * @param listener The listener to unsubscribe.
+   * @returns A reference to this Dart Frog Daemon, so that calls can be
+   * chained.
+   */
+  public off(
+    type: DartFrogDaemonEventEmitterTypes,
+    listener: (...args: any[]) => void
+  ): DartFrogDaemon {
+    this._deamonMessagesEventEmitter.off(type, listener);
+    return this;
   }
 
   /**
@@ -143,16 +164,17 @@ export class DartFrogDaemon {
       if (!this._isReady && message.event === DaemonMessageName.ready) {
         this._isReady = true;
         resolveReadyPromise();
-        this.deamonMessagesEventEmitter.off(
-          DartFrogDaemonEventEmitterTypes.event,
-          readyEventListener
-        );
+        this.off(DartFrogDaemonEventEmitterTypes.event, readyEventListener);
       }
     };
-    this.deamonMessagesEventEmitter.on(
-      DartFrogDaemonEventEmitterTypes.event,
-      readyEventListener.bind(this)
-    );
+    try {
+      this.on(
+        DartFrogDaemonEventEmitterTypes.event,
+        readyEventListener.bind(this)
+      );
+    } catch (e) {
+      e;
+    }
 
     this.process = spawn("dart_frog", ["daemon"], {
       cwd: workingDirectory,
@@ -237,13 +259,10 @@ export class DartFrogDaemon {
     const responseListener = (message: DeamonResponse) => {
       if (message.id === request.id && message.result) {
         resolveResponsePromise(message);
-        this.deamonMessagesEventEmitter.off(
-          DartFrogDaemonEventEmitterTypes.response,
-          responseListener
-        );
+        this.off(DartFrogDaemonEventEmitterTypes.response, responseListener);
       }
     };
-    this.deamonMessagesEventEmitter.on(
+    this.on(
       DartFrogDaemonEventEmitterTypes.response,
       responseListener.bind(this)
     );
