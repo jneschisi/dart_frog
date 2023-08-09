@@ -4,6 +4,7 @@ import {
   DaemonMessageName,
   DaemonRequest,
   DartFrogApplication,
+  DeamonEvent,
   DeamonResponse,
   DevServerMessageName,
   Start,
@@ -43,6 +44,12 @@ export class DartFrogDaemonReadyError extends Error {
   }
 }
 
+export enum DartFrogDaemonEventEmitterTypes {
+  request = "request",
+  response = "response",
+  event = "event",
+}
+
 /**
  * The Dart Frog Daemon is a long-running process that is responsible for
  * managing a single or multiple Dart Frog projects simultaneously.
@@ -62,6 +69,26 @@ export class DartFrogDaemon {
   // TODO(alestiago): Consider using a new class to manage the running
   // applications.
   private _runningApplications: DartFrogApplication[] = [];
+
+  private _deamonMessagesEventEmitter = new EventEmitter();
+
+  /**
+   * An event emitter that emits events upon Dart Frog Daemon communication.
+   *
+   * Events:
+   * - "request": When a request is sent to the Dart Frog Daemon, the
+   * {@link DaemonRequest} is passed as an argument to the event handler.
+   * - "response": When a response is received from the Dart Frog Daemon, the
+   * {@link DeamonResponse} is passed as an argument to the event handler.
+   * - "event": When an event is received from the Dart Frog Daemon, the
+   * {@link DaemonMessage} is passed as an argument to the event handler.
+   *
+   * @see {@link DartFrogDaemonEventEmitterTypes} for the types of events that
+   * are emitted.
+   */
+  public get deamonMessagesEventEmitter(): EventEmitter {
+    return this._deamonMessagesEventEmitter;
+  }
 
   /**
    * The Dart Frog applications that are currently running.
@@ -86,22 +113,6 @@ export class DartFrogDaemon {
    */
   public get runningApplicationsEventEmitter(): EventEmitter {
     return this._runningApplicationsEventEmitter;
-  }
-
-  // TODO(alestiago): Consider moving this to a separate file.
-  private static decodeMessages(data: Buffer): DaemonMessage[] {
-    const stringData = data.toString();
-    const messages = stringData.split("\n").filter((s) => s.trim().length > 0);
-    const parsedMessages = messages.map((message) => JSON.parse(message));
-
-    let deamonMessages: DaemonMessage[] = [];
-    for (const parsedMessage of parsedMessages) {
-      for (const message of parsedMessage) {
-        deamonMessages.push(message as DaemonMessage);
-      }
-    }
-
-    return deamonMessages;
   }
 
   /**
@@ -151,29 +162,75 @@ export class DartFrogDaemon {
       return Promise.resolve();
     }
 
-    this.process = spawn("dart_frog", ["daemon"], {
-      cwd: workingDirectory,
-    });
-
     let resolveReadyPromise: () => void;
     const readyPromise = new Promise<void>((resolve) => {
       resolveReadyPromise = resolve;
     });
 
-    const readyListener = this.addListener((message) => {
-      if (
-        !this._isReady &&
-        isDeamonEvent(message) &&
-        message.event === DaemonMessageName.ready
-      ) {
+    const readyEventListener = (message: DeamonEvent) => {
+      if (!this._isReady && message.event === DaemonMessageName.ready) {
         this._isReady = true;
         resolveReadyPromise();
-        this.removeListener(readyListener);
+        this.deamonMessagesEventEmitter.off(
+          DartFrogDaemonEventEmitterTypes.event,
+          readyEventListener
+        );
       }
+    };
+    this.deamonMessagesEventEmitter.on(
+      DartFrogDaemonEventEmitterTypes.event,
+      readyEventListener.bind(this)
+    );
+
+    this.process = spawn("dart_frog", ["daemon"], {
+      cwd: workingDirectory,
     });
+    this.process.stdout.on("data", this.stdoutDataListener.bind(this));
 
     // TODO(alestiago): Consider adding a timeout limit.
     return readyPromise;
+  }
+
+  /**
+   * Decodes the stdout and emits events accordingly via the
+   * {@link deamonMessagesEventEmitter}.
+   *
+   * @param data The data that was received from the stdout of the Dart Frog
+   * Daemon.
+   * @see {@link deamonMessagesEventEmitter} for listening to the events that
+   * are emitted.
+   */
+  private stdoutDataListener(data: Buffer): void {
+    const deamonMessages = DartFrogDaemon.decodeMessages(data);
+    for (const message of deamonMessages) {
+      if (isDeamonEvent(message)) {
+        this._deamonMessagesEventEmitter.emit(
+          DartFrogDaemonEventEmitterTypes.event,
+          message
+        );
+      } else if (isDeamonResponse(message)) {
+        this._deamonMessagesEventEmitter.emit(
+          DartFrogDaemonEventEmitterTypes.response,
+          message
+        );
+      }
+    }
+  }
+
+  // TODO(alestiago): Consider moving this to a separate file.
+  private static decodeMessages(data: Buffer): DaemonMessage[] {
+    const stringData = data.toString();
+    const messages = stringData.split("\n").filter((s) => s.trim().length > 0);
+    const parsedMessages = messages.map((message) => JSON.parse(message));
+
+    let deamonMessages: DaemonMessage[] = [];
+    for (const parsedMessage of parsedMessages) {
+      for (const message of parsedMessage) {
+        deamonMessages.push(message as DaemonMessage);
+      }
+    }
+
+    return deamonMessages;
   }
 
   /**
@@ -224,6 +281,10 @@ export class DartFrogDaemon {
     // TODO(alestiago): Handle daemon connection lost.
     const encodedRequest = `${JSON.stringify([request])}\n`;
     this.process!.stdin.write(encodedRequest);
+    this._deamonMessagesEventEmitter.emit(
+      DartFrogDaemonEventEmitterTypes.request,
+      request
+    );
 
     return responsePromise;
   }
