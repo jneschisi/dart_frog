@@ -1,3 +1,8 @@
+// TODO(alestiago): Define status enum, for when application is booting,
+// runninng, reloading or stopped.
+
+// TODO(alestiago): Allow listening to application status changes.
+
 /**
  * Represents the metadata associated to a Dart Frog application.
  */

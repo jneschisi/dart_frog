@@ -46,6 +46,7 @@ export class DartFrogApplicationRegistry {
    */
   public get applications(): DartFrogApplication[] {
     // TODO(alestiago): Make sure it is immutable.
+    // TODO(alestiago): Use an get application by id method.
     return this._runningApplications;
   }
 
