@@ -3,6 +3,7 @@ import {
   DaemonMessage,
   DaemonMessageName,
   DaemonRequest,
+  DartFrogApplicationRegistry,
   DeamonEvent,
   DeamonResponse,
   isDeamonEvent,
@@ -10,7 +11,6 @@ import {
 } from ".";
 import { IncrementalIdentifierGenerator } from "../utils";
 import { EventEmitter } from "events";
-import { DartFrogRunningApplicationRegistry } from "./dart-frog-running-application-registry";
 
 /**
  * An error that is thrown when the Dart Frog Daemon has not yet been invoked
@@ -113,8 +113,8 @@ export class DartFrogDaemon {
    * A registry of the Dart Frog applications that are currently running on
    * this Dart Frog Daemon.
    */
-  public readonly applicationsRegistry: DartFrogRunningApplicationRegistry =
-    new DartFrogRunningApplicationRegistry(this);
+  public readonly applicationsRegistry: DartFrogApplicationRegistry =
+    new DartFrogApplicationRegistry(this);
 
   /**
    * Invokes the Dart Frog Daemon.

@@ -3,9 +3,9 @@ import {
   DartFrogDaemon,
   DartFrogDaemonEventEmitterTypes,
   DeamonEvent,
-  DevServerMessageName,
   StartDaemonRequest,
   isApplicationExitDeamonEvent,
+  isLoggerInfoDeamonEvent,
   isStartDaemonRequest,
 } from ".";
 import { EventEmitter } from "events";
@@ -23,7 +23,7 @@ const vmServiceUriMessagePrefix = "The Dart VM service is listening on ";
  * The Dart Frog applications that are currently running and managed by a Dart
  * Frog Daemon.
  */
-export class DartFrogRunningApplicationRegistry {
+export class DartFrogApplicationRegistry {
   constructor(dartFrogDaemon: DartFrogDaemon) {
     this.dartFrogDaemon = dartFrogDaemon;
 
@@ -106,31 +106,31 @@ export class DartFrogRunningApplicationRegistry {
   private async retrieveVmServiceUri(
     application: DartFrogApplication
   ): Promise<string> {
+    // TODO(alestiago): Consider adding a timeout limit.
     let resolveVmServiceUriPromise: (vmServiceUri: string) => void;
     const vmServiceUriPromise = new Promise<string>((resolve) => {
       resolveVmServiceUriPromise = resolve;
     });
 
     const vmServiceUriEventListener = (message: DeamonEvent) => {
-      // TODO(alestiago): Consider adding a timeout limit.
-      if (
-        // TODO(alestiago): Define LoggerInfo interface and
-        // isLoggerInfoDeamonEvent.
-        message.event === DevServerMessageName.loggerInfo &&
-        message.params.applicationId === application.id &&
-        message.params.message
-      ) {
-        const content = message.params.message;
-        if (content.startsWith(vmServiceUriMessagePrefix)) {
-          const vmServiceUri = content.substring(
-            vmServiceUriMessagePrefix.length
-          );
-          resolveVmServiceUriPromise(vmServiceUri);
-          this.dartFrogDaemon.deamonMessagesEventEmitter.off(
-            DartFrogDaemonEventEmitterTypes.event,
-            vmServiceUriEventListener
-          );
-        }
+      if (!isLoggerInfoDeamonEvent(message)) {
+        return;
+      }
+
+      if (message.params.applicationId !== application.id) {
+        return;
+      }
+
+      const content = message.params.message;
+      if (content.startsWith(vmServiceUriMessagePrefix)) {
+        const vmServiceUri = content.substring(
+          vmServiceUriMessagePrefix.length
+        );
+        resolveVmServiceUriPromise(vmServiceUri);
+        this.dartFrogDaemon.deamonMessagesEventEmitter.off(
+          DartFrogDaemonEventEmitterTypes.event,
+          vmServiceUriEventListener
+        );
       }
     };
     this.dartFrogDaemon.deamonMessagesEventEmitter.on(

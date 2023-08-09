@@ -1,3 +1,4 @@
+import exp = require("constants");
 import { DaemonRequest, DeamonEvent, isDeamonEvent, isDeamonRequest } from "..";
 
 const domainName = "dev_server";
@@ -89,9 +90,33 @@ export function isApplicationExitDeamonEvent(
   return (
     isDeamonEvent(object) &&
     object.event === DevServerMessageName.applicationExit &&
-    // TODO(alestiago): Check for string not undefined.
-    object.params.applicationId !== undefined &&
-    object.params.requestId !== undefined &&
-    object.params.exitCode !== undefined
+    typeof object.params.applicationId === "string" &&
+    typeof object.params.requestId === "string" &&
+    // TODO(alestiago): Check for the actual type of exitCode.
+    typeof object.params.exitCode === "string"
   );
 }
+
+export interface LoggerInfoDeamonEvent extends DeamonEvent {
+  params: {
+    applicationId: string;
+    requestId: string;
+    workingDirectory: string;
+    message: string;
+  };
+}
+
+export function isLoggerInfoDeamonEvent(
+  object: any
+): object is LoggerInfoDeamonEvent {
+  return (
+    isDeamonEvent(object) &&
+    object.event === DevServerMessageName.loggerInfo &&
+    typeof object.params.applicationId === "string" &&
+    typeof object.params.requestId === "string" &&
+    typeof object.params.workingDirectory === "string" &&
+    typeof object.params.message === "string"
+  );
+}
+
+// TODO(alestiago): Add dev_server.progressComplete
