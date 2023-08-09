@@ -3,9 +3,25 @@ import {
   DaemonMessage,
   DaemonMessageName,
   DaemonRequest,
+  DartFrogApplication,
+  DeamonResponse,
+  DevServerMessageName,
+  Start,
+  Stop,
   isDeamonEvent,
+  isDeamonResponse,
 } from ".";
 import { IncrementalIdentifierGenerator } from "../utils";
+import { EventEmitter } from "events";
+
+/**
+ * The prefix of the message that is sent by the Dart Frog Daemon when the Dart
+ * VM service is listening.
+ *
+ * @example
+ * "The Dart VM service is listening on http://127.0.0.1:8181/fQBcSu3OOc8=/"
+ */
+const vmServiceUriMessagePrefix = "The Dart VM service is listening on ";
 
 /**
  * An error that is thrown when the Dart Frog Daemon has not yet been invoked
@@ -41,6 +57,35 @@ export class DartFrogDaemon {
    */
   public static get instance() {
     return this._instance || (this._instance = new this());
+  }
+
+  // TODO(alestiago): Consider using a new class to manage the running
+  // applications.
+  private _runningApplications: DartFrogApplication[] = [];
+
+  /**
+   * The Dart Frog applications that are currently running.
+   */
+  public get applications(): DartFrogApplication[] {
+    // TODO(alestiago): Make sure it is immutable.
+    return this._runningApplications;
+  }
+
+  private _runningApplicationsEventEmitter = new EventEmitter();
+
+  /**
+   * An event emitter that emits events when the list of running applications,
+   * or one of its properties, changes.
+   *
+   * Events:
+   * - "add": When a new application is added to the list of running
+   *  applications.
+   * - "remove": When an application is removed from the list of running
+   * applications.
+   * - "change:<property>": When an application's <property> changes.
+   */
+  public get runningApplicationsEventEmitter(): EventEmitter {
+    return this._runningApplicationsEventEmitter;
   }
 
   // TODO(alestiago): Consider moving this to a separate file.
@@ -129,6 +174,7 @@ export class DartFrogDaemon {
         }
       }
     };
+    // TODO(alestiago): Change to use this.addListener.
     this.process.stdout.addListener("data", readyListener);
 
     // TODO(alestiago): Consider adding a timeout limit.
@@ -150,17 +196,115 @@ export class DartFrogDaemon {
    * @see {@link isReady} to check if the Dart Frog Daemon is ready to accept
    * requests.
    */
-  public send(request: DaemonRequest): void {
+  public send(request: DaemonRequest): Promise<DeamonResponse> {
     if (!this.process) {
       throw new DartFrogDaemonWaiveError();
-    }
-    if (!this.isReady) {
+    } else if (!this.isReady) {
       throw new DartFrogDaemonReadyError();
+    }
+
+    let resolveResponsePromise: (response: DeamonResponse) => void;
+    const responsePromise = new Promise<DeamonResponse>((resolve) => {
+      resolveResponsePromise = resolve;
+    });
+
+    const responseListener = this.addListener((message) => {
+      if (
+        isDeamonResponse(message) &&
+        message.id === request.id &&
+        message.result
+      ) {
+        resolveResponsePromise(message);
+        // TODO(alestiago): Check if the listener is being removed.
+        this.removeListener(responseListener);
+      }
+    });
+
+    if (request instanceof Start) {
+      this.registerRunningDartFrogApplication(request, responsePromise);
+    } else if (request instanceof Stop) {
+      this.deregisterRunningDartFrogApplication(request, responsePromise);
     }
 
     // TODO(alestiago): Handle daemon connection lost.
     const encodedRequest = `${JSON.stringify([request])}\n`;
     this.process!.stdin.write(encodedRequest);
+
+    return responsePromise;
+  }
+
+  private async registerRunningDartFrogApplication(
+    request: Start,
+    response: Promise<DeamonResponse>
+  ) {
+    const dartFrogApplication = new DartFrogApplication(
+      request.params.workingDirectory,
+      request.params.port,
+      request.params.dartVmServicePort
+    );
+
+    // TODO(alestiago): Check if .then chain will be required.
+    await response.then((response) => {
+      if (response.result.applicationId) {
+        dartFrogApplication.identifier = response.result.applicationId;
+        this._runningApplications.push(dartFrogApplication);
+        this._runningApplicationsEventEmitter.emit("add", dartFrogApplication);
+      }
+    });
+
+    // TODO(alestiago): Consider if it is worth to refactor to its own method.
+    const vmServiceUriListener = this.addListener((message) => {
+      // TODO(alestiago): Consider adding a timeout limit.
+      if (
+        isDeamonEvent(message) &&
+        message.event === DevServerMessageName.loggerInfo &&
+        message.params.requestId === request.id
+      ) {
+        if (!message.params.message) {
+          return;
+        }
+
+        const content = message.params.message;
+        if (content.startsWith(vmServiceUriMessagePrefix)) {
+          const vmServiceUri = content.substring(
+            vmServiceUriMessagePrefix.length
+          );
+          dartFrogApplication.vmServiceUri = vmServiceUri;
+          this._runningApplicationsEventEmitter.emit(
+            "change:vmServiceUri",
+            dartFrogApplication
+          );
+          // TODO(alestiago): Check if the listener is actually removed.
+          this.removeListener(vmServiceUriListener);
+        }
+      }
+    });
+  }
+
+  private async deregisterRunningDartFrogApplication(
+    request: Stop,
+    response: Promise<DeamonResponse>
+  ) {
+    // TODO(alestiago): Check if .then chain will be required.
+    response.then((response) => {
+      // TODO(alestiago): Check what exit code is successful.
+      if (response.result.applicationId && response.result.exitCode === 1) {
+        const dartFrogApplication = this._runningApplications.find(
+          (application) =>
+            application.identifier === response.result.applicationId
+        );
+        if (dartFrogApplication) {
+          this._runningApplications.splice(
+            this._runningApplications.indexOf(dartFrogApplication),
+            1
+          );
+          this._runningApplicationsEventEmitter.emit(
+            "remove",
+            dartFrogApplication
+          );
+        }
+      }
+    });
   }
 
   /**
@@ -209,4 +353,7 @@ export class DartFrogDaemon {
 
   // TODO(alestiago): Consider adding a method to ping the Dart Frog Daemon and
   // check if it is still alive.
+
+  // TODO(alestiago): Consider adding a method to kill the Dart Frog Daemon and
+  // dispose of the process, event emitter, listeners, etc.
 }

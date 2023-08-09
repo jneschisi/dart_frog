@@ -1,15 +1,18 @@
-// TODO(alestiago): Define a manager or so to keep track of all the
-// applications.
 /**
  * Represents the metadata associated to a Dart Frog application.
  */
 export class DartFrogApplication {
   // TODO(alestiago): Include constructor that finds available ports.
-  constructor(port: number, vmServicePort: number, projectPath: string) {
+  constructor(projectPath: string, port: number, vmServicePort: number) {
+    this.projectPath = projectPath;
     this.port = port;
     this.vmServicePort = vmServicePort;
-    this.projectPath = projectPath;
   }
+
+  /**
+   * The root path to the application's project directory.
+   */
+  public readonly projectPath: string;
 
   /**
    * The port on which the application is listening.
@@ -20,11 +23,6 @@ export class DartFrogApplication {
    * The port on which the VM service is listening.
    */
   public readonly vmServicePort: number;
-
-  /**
-   * The root path to the application's project directory.
-   */
-  public readonly projectPath: string;
 
   private _id: string | undefined;
 

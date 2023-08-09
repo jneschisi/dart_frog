@@ -17,7 +17,7 @@ export enum DevServerMessageName {
 export class Start extends DaemonRequest {
   constructor(
     id: string,
-    workingDirectory: String,
+    workingDirectory: string,
     port: number,
     dartVmServicePort: number
   ) {
@@ -32,7 +32,11 @@ export class Start extends DaemonRequest {
 
   public readonly method: string = DevServerMessageName.start;
   public readonly id: string;
-  public readonly params: Object;
+  public readonly params: {
+    workingDirectory: string;
+    port: number;
+    dartVmServicePort: number;
+  };
 }
 
 export class Reload extends DaemonRequest {
@@ -46,7 +50,7 @@ export class Reload extends DaemonRequest {
 
   public readonly method: string = DevServerMessageName.reload;
   public readonly id: string;
-  public readonly params: Object;
+  public readonly params: { applicationId: string };
 }
 
 export class Stop extends DaemonRequest {
@@ -60,5 +64,5 @@ export class Stop extends DaemonRequest {
 
   public readonly method: string = DevServerMessageName.stop;
   public readonly id: string;
-  public readonly params: Object;
+  public readonly params: { applicationId: string };
 }

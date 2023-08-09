@@ -16,7 +16,7 @@ export class RequestVersion extends DaemonRequest {
 
   public readonly method: string = DaemonMessageName.requestVersion;
   public readonly id: string;
-  public readonly params: Object | undefined = undefined;
+  public readonly params: any = undefined;
 }
 
 export class Kill extends DaemonRequest {
@@ -27,5 +27,5 @@ export class Kill extends DaemonRequest {
 
   public readonly method: string = DaemonMessageName.kill;
   public readonly id: string;
-  public readonly params: Object | undefined = undefined;
+  public readonly params: any = undefined;
 }
