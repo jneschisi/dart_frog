@@ -260,23 +260,19 @@ export class DartFrogDaemon {
       resolveResponsePromise = resolve;
     });
 
-    const responseListener = this.addListener((message) => {
-      if (
-        isDeamonResponse(message) &&
-        message.id === request.id &&
-        message.result
-      ) {
+    const responseListener = (message: DeamonResponse) => {
+      if (message.id === request.id && message.result) {
         resolveResponsePromise(message);
-        // TODO(alestiago): Check if the listener is being removed.
-        this.removeListener(responseListener);
+        this.deamonMessagesEventEmitter.off(
+          DartFrogDaemonEventEmitterTypes.response,
+          responseListener
+        );
       }
-    });
-
-    if (request instanceof Start) {
-      this.registerRunningDartFrogApplication(request, responsePromise);
-    } else if (request instanceof Stop) {
-      this.deregisterRunningDartFrogApplication(request, responsePromise);
-    }
+    };
+    this.deamonMessagesEventEmitter.on(
+      DartFrogDaemonEventEmitterTypes.response,
+      responseListener.bind(this)
+    );
 
     // TODO(alestiago): Handle daemon connection lost.
     const encodedRequest = `${JSON.stringify([request])}\n`;
@@ -299,20 +295,10 @@ export class DartFrogDaemon {
       request.params.dartVmServicePort
     );
 
-    // TODO(alestiago): Check if .then chain will be required.
-    await response.then((response) => {
-      if (response.result.applicationId) {
-        dartFrogApplication.identifier = response.result.applicationId;
-        this._runningApplications.push(dartFrogApplication);
-        this._runningApplicationsEventEmitter.emit("add", dartFrogApplication);
-      }
-    });
-
     // TODO(alestiago): Consider if it is worth to refactor to its own method.
-    const vmServiceUriListener = this.addListener((message) => {
+    const vmServiceUriListener = (message: DeamonEvent) => {
       // TODO(alestiago): Consider adding a timeout limit.
       if (
-        isDeamonEvent(message) &&
         message.event === DevServerMessageName.loggerInfo &&
         message.params.requestId === request.id
       ) {
@@ -330,9 +316,24 @@ export class DartFrogDaemon {
             "change:vmServiceUri",
             dartFrogApplication
           );
-          // TODO(alestiago): Check if the listener is actually removed.
-          this.removeListener(vmServiceUriListener);
+          this.deamonMessagesEventEmitter.off(
+            DartFrogDaemonEventEmitterTypes.event,
+            vmServiceUriListener
+          );
         }
+      }
+    };
+    this.deamonMessagesEventEmitter.on(
+      DartFrogDaemonEventEmitterTypes.event,
+      vmServiceUriListener.bind(this)
+    );
+
+    // TODO(alestiago): Check if .then chain will be required.
+    await response.then((response) => {
+      if (response.result.applicationId) {
+        dartFrogApplication.identifier = response.result.applicationId;
+        this._runningApplications.push(dartFrogApplication);
+        this._runningApplicationsEventEmitter.emit("add", dartFrogApplication);
       }
     });
   }
@@ -361,50 +362,6 @@ export class DartFrogDaemon {
         }
       }
     });
-  }
-
-  /**
-   * Adds a listener to listen to Dart Frog Daemon messages.
-   *
-   * The messages are decoded from the raw data that is sent by the Dart Frog
-   * Daemon via stdout.
-   *
-   * @param callback The callback that will be invoked when the Dart Frog Daemon
-   * sends a message.
-   * @returns The raw data listener that was added to the Dart Frog Daemon. This
-   * can be used to remove the listener later via
-   * {@link removeListener}.
-   * @throws {DartFrogDaemonWaiveError} If the Dart Frog Daemon has not yet
-   * been {@link invoke}d.
-   * @see {@link removeListener} to remove a listener from the Dart Frog Daemon.
-   */
-  public addListener(
-    callback: (message: DaemonMessage) => void
-  ): (data: any) => void {
-    if (!this.process) {
-      throw new DartFrogDaemonWaiveError();
-    }
-
-    const decodingListener = (data: any) => {
-      const messages = DartFrogDaemon.decodeMessages(data);
-      for (const message of messages) {
-        callback(message);
-      }
-    };
-
-    this.process!.stdout.addListener("data", decodingListener);
-    return decodingListener;
-  }
-
-  /**
-   * Removes a registered listener from the Dart Frog Daemon process.
-   *
-   * @param listener The raw listener to remove from the Dart Frog Daemon,
-   * should be the return value of {@link addListener}.
-   * @see {@link addListener} to add a listener to the Dart Frog Daemon.
-   */
-  public removeListener(listener: (data: any) => void): void {
-    this.process!.stdout.removeListener("data", listener);
   }
 
   // TODO(alestiago): Consider adding a method to ping the Dart Frog Daemon and

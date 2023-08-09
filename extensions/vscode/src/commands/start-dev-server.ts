@@ -9,7 +9,10 @@ import {
 } from "vscode";
 import { nearestDartFrogProject } from "../utils";
 import {
+  DaemonMessage,
   DartFrogDaemon,
+  DartFrogDaemonEventEmitterTypes,
+  DeamonEvent,
   DevServerMessageName,
   Start,
   isDeamonEvent,
@@ -65,9 +68,8 @@ export const startDevServer = async (): Promise<void> => {
     dartVmServicePort
   );
 
-  const vmServiceUriListener = dartFrogDaemon.addListener((message) => {
+  const vmServiceUriEventListener = (message: DeamonEvent) => {
     if (
-      isDeamonEvent(message) &&
       message.event === DevServerMessageName.loggerInfo &&
       message.params.requestId === startMessage.id
     ) {
@@ -85,29 +87,25 @@ export const startDevServer = async (): Promise<void> => {
         );
         attachToDebugSession(vmServiceUri);
         // TODO(alestiago): Check if the listener is actually removed.
-        dartFrogDaemon.removeListener(vmServiceUriListener);
+        dartFrogDaemon.deamonMessagesEventEmitter.off(
+          DartFrogDaemonEventEmitterTypes.event,
+          vmServiceUriEventListener
+        );
       }
     }
-  });
+  };
+  dartFrogDaemon.deamonMessagesEventEmitter.on(
+    DartFrogDaemonEventEmitterTypes.event,
+    vmServiceUriEventListener
+  );
 
-  const startProcessCompleteListener = dartFrogDaemon.addListener((message) => {
-    if (
-      isDeamonEvent(message) &&
-      message.event === DevServerMessageName.progressComplete &&
-      message.params.requestId === startMessage.id
-    ) {
-      // TODO(alestiago): Actually parse the URI instead of composing it.
-      setTimeout(() => {
-        commands.executeCommand(
-          "vscode.open",
-          Uri.parse(`http://localhost:${port}/`)
-        );
-      }, 5000);
-      dartFrogDaemon.removeListener(startProcessCompleteListener);
-    }
-  });
-
-  dartFrogDaemon.send(startMessage);
+  await dartFrogDaemon.send(startMessage);
+  setTimeout(() => {
+    commands.executeCommand(
+      "vscode.open",
+      Uri.parse(`http://localhost:${port}/`)
+    );
+  }, 5000);
 
   debug.onDidTerminateDebugSession(() => {
     // TODO(alestiago): Stop the development server.
