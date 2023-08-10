@@ -6,7 +6,8 @@ import {
   updateCLI,
   create,
   startDevServer,
-  stopDevelopmentServer,
+  stopDevServer,
+  reloadDevServer,
 } from "./commands";
 import {
   readDartFrogCLIVersion,
@@ -51,12 +52,17 @@ export function activate(
     vscode.commands.registerCommand("dart-frog.new-route", newRoute),
     vscode.commands.registerCommand("dart-frog.new-middleware", newMiddleware),
     vscode.commands.registerCommand(
-      "dart-frog.start-development-server",
+      "dart-frog.start-dev-server",
       startDevServer
     ),
+    vscode.commands.registerCommand("dart-frog.stop-dev-server", stopDevServer),
     vscode.commands.registerCommand(
-      "dart-frog.stop-development-server",
-      stopDevelopmentServer
+      "dart-frog.reload-dev-server",
+      reloadDevServer
+    ),
+    vscode.commands.registerCommand(
+      "dart-frog.debug-dev-server",
+      reloadDevServer
     )
   );
   return context;

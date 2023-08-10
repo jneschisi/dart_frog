@@ -54,12 +54,20 @@
         "title": "Dart Frog: New Middleware"
       },
       {
-        "command": "dart-frog.start-development-server",
+        "command": "dart-frog.start-dev-server",
         "title": "Dart Frog: Start Development Server"
       },
       {
-        "command": "dart-frog.stop-development-server",
+        "command": "dart-frog.stop-dev-server",
         "title": "Dart Frog: Stop Development Server"
+      },
+      {
+        "command": "dart-frog.reload-dev-server",
+        "title": "Dart Frog: Reload Development Server"
+      },
+      {
+        "command": "dart-frog.debug-dev-server",
+        "title": "Dart Frog: Debug Development Server"
       }
     ],
     "menus": {
