@@ -13,7 +13,7 @@ export class RunCodeLensProvider extends DebugCodeLensProvider {
     codeLens.command = {
       title: "Run",
       tooltip: "Starts a development server",
-      command: "dart-frog.start-development-server",
+      command: "dart-frog.start-dev-server",
       // TODO(alestiago): Pass the document URI to open server with route.
     };
     return codeLens;
