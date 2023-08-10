@@ -43,13 +43,14 @@ export class DartFrogApplicationRegistry {
 
   private _runningApplications: DartFrogApplication[] = [];
 
+  private _runningApplicationsEventEmitter = new EventEmitter();
+
   /**
    * Retrieves all the Dart Frog applications that are currently
    * registered with this Dart Frog Daemon.
    */
   public get all(): DartFrogApplication[] {
     // TODO(alestiago): Make sure it is immutable.
-    // TODO(alestiago): Use an get application by id method.
     return this._runningApplications;
   }
 
@@ -67,9 +68,6 @@ export class DartFrogApplicationRegistry {
       return application.id === id;
     });
   }
-
-  // TODO(alestiago): Consider using Observable?
-  private _runningApplicationsEventEmitter = new EventEmitter();
 
   /**
    * Starts listening to events related to this application registry.
@@ -118,6 +116,8 @@ export class DartFrogApplicationRegistry {
       request.params.dartVmServicePort
     );
 
+    // TODO(alestiago): Consider removing listeners if the application fails to
+    // start.
     const applicationId = this.retrieveApplicationId(request.id).then(
       (applicationId) => {
         application.id = applicationId;
