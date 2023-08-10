@@ -61,7 +61,7 @@ export const startDevServer = async (): Promise<void> => {
   }
 
   // TODO(alestiago): Prompt for port and dartVmServicePort.
-  const port = 8383;
+  const port = 8389;
   const dartVmServicePort = port + 1;
   const startMessage = new StartDaemonRequest(
     dartFrogDaemon.requestIdentifierGenerator.generate(),
@@ -93,12 +93,12 @@ export const startDevServer = async (): Promise<void> => {
         return;
       }
       resolveApplicationAddedPromise(application);
-      dartFrogDaemon.applicationsRegistry.runningApplicationsEventEmitter.off(
+      dartFrogDaemon.applicationsRegistry.off(
         "add",
         applicationAddedEventListener
       );
     };
-    dartFrogDaemon.applicationsRegistry.runningApplicationsEventEmitter.on(
+    dartFrogDaemon.applicationsRegistry.on(
       "add",
       applicationAddedEventListener.bind(this)
     );

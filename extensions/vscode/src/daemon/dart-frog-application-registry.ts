@@ -39,6 +39,8 @@ export class DartFrogApplicationRegistry {
     );
   }
 
+  private dartFrogDaemon: DartFrogDaemon;
+
   private _runningApplications: DartFrogApplication[] = [];
 
   /**
@@ -54,20 +56,40 @@ export class DartFrogApplicationRegistry {
   private _runningApplicationsEventEmitter = new EventEmitter();
 
   /**
-   * An event emitter that emits events when the list of running applications,
-   * or one of its properties, changes.
+   * Starts listening to events related to this application registry.
    *
-   * Events:
+   * The possible types of events are:
    * - "add": When a new application is added to the list of running
    *  applications.
    * - "remove": When an application is removed from the list of running
    * applications.
+   *
+   * @returns A reference to this Dart Frog Daemon application registry,
+   * so that calls can be chained.
    */
-  public get runningApplicationsEventEmitter(): EventEmitter {
-    return this._runningApplicationsEventEmitter;
+  public on(
+    type: string,
+    listener: (...args: any[]) => void
+  ): DartFrogApplicationRegistry {
+    this._runningApplicationsEventEmitter.on(type, listener);
+    return this;
   }
 
-  private dartFrogDaemon: DartFrogDaemon;
+  /**
+   * Unsubscribes a listener from events related to this application registry.
+   *
+   * @param type The type of event to unsubscribe from.
+   * @param listener The listener to unsubscribe.
+   * @returns A reference to this Dart Frog Daemon application registry,
+   * so that calls can be chained.
+   */
+  public off(
+    type: string,
+    listener: (...args: any[]) => void
+  ): DartFrogApplicationRegistry {
+    this._runningApplicationsEventEmitter.off(type, listener);
+    return this;
+  }
 
   private async startRequestListener(request: StartDaemonRequest) {
     if (!isStartDaemonRequest(request)) {
