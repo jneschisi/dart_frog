@@ -44,12 +44,28 @@ export class DartFrogApplicationRegistry {
   private _runningApplications: DartFrogApplication[] = [];
 
   /**
-   * The Dart Frog applications that are currently running.
+   * Retrieves all the Dart Frog applications that are currently
+   * registered with this Dart Frog Daemon.
    */
-  public get applications(): DartFrogApplication[] {
+  public get all(): DartFrogApplication[] {
     // TODO(alestiago): Make sure it is immutable.
     // TODO(alestiago): Use an get application by id method.
     return this._runningApplications;
+  }
+
+  /**
+   * Retrieves the Dart Frog application that is currently registered with this
+   * Dart Frog Daemon and has the given identifier.
+   *
+   * @param id The application identifier assigned by the Dart Frog Daemon.
+   * @returns The Dart Frog application that is currently registered with this
+   * Dart Frog Daemon and has the given identifier, or undefined if no such
+   * application exists.
+   */
+  public getById(id: string): DartFrogApplication | undefined {
+    return this.all.find((application) => {
+      return application.id === id;
+    });
   }
 
   // TODO(alestiago): Consider using Observable?

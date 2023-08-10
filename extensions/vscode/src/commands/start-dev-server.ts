@@ -74,8 +74,8 @@ export const startDevServer = async (): Promise<void> => {
     startMessage
   )) as StartDeamonResponse;
 
-  let application = dartFrogDaemon.applicationsRegistry.applications.find(
-    (application) => application.id === startResponse.result.applicationId
+  let application = dartFrogDaemon.applicationsRegistry.getById(
+    startResponse.result.applicationId
   );
   if (!application) {
     let resolveApplicationAddedPromise: (
