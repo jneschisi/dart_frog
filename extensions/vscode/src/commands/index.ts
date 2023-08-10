@@ -5,3 +5,5 @@ export * from "./new-route";
 export * from "./new-middleware";
 export * from "./start-dev-server";
 export * from "./stop-dev-server";
+export * from "./debug-dev-server";
+export * from "./reload-dev-server";

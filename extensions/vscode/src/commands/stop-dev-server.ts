@@ -1,2 +1,1 @@
-// TODO(alestiago): Refactor to have one command per file.
-export const stopDevelopmentServer = async (): Promise<void> => {};
+export const stopDevServer = async (): Promise<void> => {};
