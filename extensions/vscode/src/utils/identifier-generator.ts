@@ -12,11 +12,11 @@ abstract class IdentifierGenerator {
  * Generates incremental identifiers.
  *
  * @example
- * const generator = new IncrementalIdentifierGenerator();
+ * const generator = new AscendingNumericalIdentifierGenerator();
  * generator.generate(); // "0"
  * generator.generate(); // "1"
  */
-export class NumericalIncrementalIdentifierGenerator
+export class AscendingNumericalIdentifierGenerator
   implements IdentifierGenerator
 {
   private counter: bigint = 0n;
