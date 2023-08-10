@@ -9,7 +9,7 @@ import {
   isDeamonResponse,
   isReadyDeamonEvent,
 } from ".";
-import { IncrementalIdentifierGenerator } from "../utils";
+import { NumericalIncrementalIdentifierGenerator } from "../utils";
 import { EventEmitter } from "events";
 
 /**
@@ -127,8 +127,8 @@ export class DartFrogDaemon {
    * Should not be used as a request counter, since it is not guaranteed to
    * be called the same number of times as the number of requests sent.
    */
-  public readonly requestIdentifierGenerator: IncrementalIdentifierGenerator =
-    new IncrementalIdentifierGenerator();
+  public readonly requestIdentifierGenerator: NumericalIncrementalIdentifierGenerator =
+    new NumericalIncrementalIdentifierGenerator();
 
   /**
    * A registry of the Dart Frog applications that are currently running on

@@ -16,7 +16,9 @@ abstract class IdentifierGenerator {
  * generator.generate(); // "0"
  * generator.generate(); // "1"
  */
-export class IncrementalIdentifierGenerator implements IdentifierGenerator {
+export class NumericalIncrementalIdentifierGenerator
+  implements IdentifierGenerator
+{
   private counter: bigint = 0n;
 
   public generate(): string {
