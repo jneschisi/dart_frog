@@ -1,5 +1,5 @@
-// TODO(alestiago): Define status enum, for when application is booting,
-// runninng, reloading or stopped.
+// TODO(alestiago): Define status enum, for when application is starting,
+// running, reloading or stopped.
 
 // TODO(alestiago): Allow listening to application status changes.
 
