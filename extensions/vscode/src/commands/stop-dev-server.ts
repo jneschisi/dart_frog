@@ -3,29 +3,46 @@ import {
   QuickPickItem,
   QuickInputButton,
   QuickPickItemKind,
+  ProgressOptions,
 } from "vscode";
-import { DartFrogApplication, DartFrogDaemon } from "../daemon";
+import {
+  DartFrogApplication,
+  DartFrogDaemon,
+  StopDaemonRequest,
+} from "../daemon";
 
 export const stopDevServer = async (): Promise<void> => {
   // TODO(alestiago): Check if daemon is running.
   const dartFrogDaemon = DartFrogDaemon.instance;
-  const dartFrogApplications = dartFrogDaemon.applicationsRegistry.all;
+  const applications = dartFrogDaemon.applicationsRegistry.all;
 
-  if (dartFrogApplications.length === 0) {
+  let application: DartFrogApplication;
+  if (applications.length === 0) {
     showInformationNoRunningDevServer();
     return;
+  } else if (applications.length === 1) {
+    application = applications[0];
+  } else {
+    const selection = await showServerQuickPick(applications);
+    if (!selection) {
+      return;
+    }
+    application = selection;
   }
 
-  const quickPick = window.createQuickPick();
-  quickPick.placeholder = "Select a device to use";
-  quickPick.busy = true;
-  quickPick.ignoreFocusOut = true;
-
-  quickPick.items = dartFrogApplications.map(
-    (dartFrogApplication) =>
-      new PickableDartFrogApplication(dartFrogApplication)
+  const stop = new StopDaemonRequest(
+    dartFrogDaemon.requestIdentifierGenerator.generate(),
+    application.id!
   );
-  quickPick.show();
+  const stopResponse = dartFrogDaemon.send(stop);
+
+  const options: ProgressOptions = {
+    location: 15,
+    title: `Stopping server...`,
+  };
+  window.withProgress(options, async function () {
+    return await stopResponse;
+  });
 };
 
 async function showInformationNoRunningDevServer(): Promise<void> {
@@ -41,6 +58,23 @@ async function showInformationNoRunningDevServer(): Promise<void> {
     case "Ignore":
       break;
   }
+}
+
+async function showServerQuickPick(
+  applications: DartFrogApplication[]
+): Promise<DartFrogApplication | undefined> {
+  const quickPick = window.createQuickPick();
+  quickPick.placeholder = "Select a device to use";
+  quickPick.busy = true;
+  quickPick.ignoreFocusOut = true;
+
+  quickPick.items = applications.map(
+    (application) => new PickableDartFrogApplication(application)
+  );
+  quickPick.show();
+
+  // TODO(alestiago): Handle cancellation and selection.
+  return undefined;
 }
 
 class PickableDartFrogApplication implements QuickPickItem {

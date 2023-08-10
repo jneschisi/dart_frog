@@ -198,6 +198,8 @@ export class DartFrogApplicationRegistry {
     return vmServiceUriPromise;
   }
 
+  // TODO(alestiago): Debug and check if after stop the application is still
+  // running.
   private applicationExitEventListener(event: DeamonEvent) {
     if (!isApplicationExitDeamonEvent(event)) {
       return;
