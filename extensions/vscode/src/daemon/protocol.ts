@@ -7,7 +7,11 @@ export abstract class DaemonRequest implements DaemonMessage {
 }
 
 export function isDeamonRequest(object: any): object is DaemonRequest {
-  return "method" in object;
+  return (
+    typeof object.id === "string" &&
+    typeof object.method === "string" &&
+    "params" in object
+  );
 }
 
 export interface DeamonResponse extends DaemonMessage {
@@ -17,7 +21,9 @@ export interface DeamonResponse extends DaemonMessage {
 }
 
 export function isDeamonResponse(object: any): object is DeamonResponse {
-  return "id" in object;
+  return (
+    typeof object.id === "string" && ("result" in object || "error" in object)
+  );
 }
 
 export interface DeamonEvent extends DaemonMessage {
@@ -26,5 +32,5 @@ export interface DeamonEvent extends DaemonMessage {
 }
 
 export function isDeamonEvent(object: any): object is DeamonEvent {
-  return "event" in object;
+  return typeof object.event === "string" && "params" in object;
 }
