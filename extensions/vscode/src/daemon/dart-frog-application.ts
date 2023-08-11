@@ -90,4 +90,24 @@ export class DartFrogApplication {
 
     this._vmServiceUri = value;
   }
+
+  private _address: string | undefined;
+
+  public get address(): string | undefined {
+    return this._address;
+  }
+
+  /**
+   * Sets the address of the Dart Frog application.
+   *
+   * This method should only be called once, when the application is started and
+   * has been assigned an address by the Dart Frog Daemon.
+   */
+  public set address(value: string) {
+    if (this._address) {
+      return;
+    }
+
+    this._address = value;
+  }
 }

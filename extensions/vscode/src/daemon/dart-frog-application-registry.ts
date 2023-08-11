@@ -116,8 +116,8 @@ export class DartFrogApplicationRegistry {
       request.params.dartVmServicePort
     );
 
-    // TODO(alestiago): Consider removing listeners if the application fails to
-    // start.
+    // TODO(alestiago): Consider adding a timeout to promises in case the
+    // application does not start.
     const applicationId = this.retrieveApplicationId(request.id).then(
       (applicationId) => {
         application.id = applicationId;
@@ -128,7 +128,11 @@ export class DartFrogApplicationRegistry {
         application.vmServiceUri = vmServiceUri;
       }
     );
-    await Promise.all([applicationId, vmServiceUri]);
+    const address = this.retrieveAddress(request.id).then((address) => {
+      application.address = address;
+    });
+
+    await Promise.all([applicationId, vmServiceUri, address]);
 
     this.register(application);
   }
@@ -161,7 +165,6 @@ export class DartFrogApplicationRegistry {
     return applicationId;
   }
 
-  // TODO(alestiago): Consider moving to DartFrogApplication?
   private async retrieveVmServiceUri(requestId: string): Promise<string> {
     // TODO(alestiago): Consider adding a timeout limit.
     let resolveVmServiceUriPromise: (vmServiceUri: string) => void;
@@ -196,6 +199,52 @@ export class DartFrogApplicationRegistry {
     );
 
     return vmServiceUriPromise;
+  }
+
+  /**
+   * Retrieves the IP address of the Dart Frog application.
+   *
+   * If the application is running on "http://localhost:8080", then
+   * this method will return "localhost".
+   *
+   * @param requestId The request identifier of the request that started the
+   * Dart Frog application.
+   * @returns The address of the Dart Frog application.
+   */
+  private async retrieveAddress(requestId: string): Promise<string> {
+    let resolveAddressPromise = (address: string) => {};
+    const addressPromise = new Promise<string>((resolve) => {
+      resolveAddressPromise = resolve;
+    });
+
+    const addressEventListener = (message: DeamonEvent) => {
+      if (!isProgressCompleteDeamonEvent(message)) {
+        return;
+      } else if (message.params.requestId !== requestId) {
+        return;
+      }
+
+      const progressMessage = message.params.progressMessage;
+      const address = progressMessage
+        .substring(
+          progressMessage.indexOf("://") + 1,
+          message.params.progressMessage.length - 1
+        )
+        .substring(0, progressMessage.indexOf(":"));
+
+      resolveAddressPromise(address);
+      this.dartFrogDaemon.off(
+        DartFrogDaemonEventEmitterTypes.event,
+        addressEventListener
+      );
+    };
+
+    this.dartFrogDaemon.on(
+      DartFrogDaemonEventEmitterTypes.event,
+      this.applicationExitEventListener.bind(this)
+    );
+
+    return addressPromise;
   }
 
   private applicationExitEventListener(event: DeamonEvent) {
