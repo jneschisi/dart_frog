@@ -98,10 +98,10 @@ export class DartFrogApplication {
   }
 
   /**
-   * Sets the address of the Dart Frog application.
+   * Sets the HTTP address of the Dart Frog application.
    *
    * This method should only be called once, when the application is started and
-   * has been assigned an address by the Dart Frog Daemon.
+   * has been assigned an address by the Dart Frog daemon.
    */
   public set address(value: string) {
     if (this._address) {

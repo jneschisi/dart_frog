@@ -202,17 +202,17 @@ export class DartFrogApplicationRegistry {
   }
 
   /**
-   * Retrieves the IP address of the Dart Frog application.
+   * Retrieves the HTTP address of the Dart Frog application.
    *
    * If the application is running on "http://localhost:8080", then
-   * this method will return "localhost".
+   * this method will return "http://localhost:8080".
    *
    * @param requestId The request identifier of the request that started the
    * Dart Frog application.
    * @returns The address of the Dart Frog application.
    */
   private async retrieveAddress(requestId: string): Promise<string> {
-    let resolveAddressPromise = (address: string) => {};
+    let resolveAddressPromise: (address: string) => void;
     const addressPromise = new Promise<string>((resolve) => {
       resolveAddressPromise = resolve;
     });
@@ -225,13 +225,8 @@ export class DartFrogApplicationRegistry {
       }
 
       const progressMessage = message.params.progressMessage;
-      const address = progressMessage
-        .substring(
-          progressMessage.indexOf("://") + 1,
-          message.params.progressMessage.length - 1
-        )
-        .substring(0, progressMessage.indexOf(":"));
-
+      const addressRegex = /http:\/\/[^\u001b\\]+/;
+      const address = progressMessage.match(addressRegex)![0];
       resolveAddressPromise(address);
       this.dartFrogDaemon.off(
         DartFrogDaemonEventEmitterTypes.event,
@@ -241,7 +236,7 @@ export class DartFrogApplicationRegistry {
 
     this.dartFrogDaemon.on(
       DartFrogDaemonEventEmitterTypes.event,
-      this.applicationExitEventListener.bind(this)
+      addressEventListener.bind(this)
     );
 
     return addressPromise;

@@ -56,7 +56,7 @@ export const startDevServer = async (): Promise<void> => {
   }
 
   // TODO(alestiago): Prompt for port and dartVmServicePort.
-  const port = 8389;
+  const port = 8391;
   const dartVmServicePort = port + 1;
   const startMessage = new StartDaemonRequest(
     dartFrogDaemon.requestIdentifierGenerator.generate(),
@@ -100,12 +100,9 @@ export const startDevServer = async (): Promise<void> => {
     application = await applicationAddedPromise;
   }
 
-  attachToDebugSession(application!.vmServiceUri!);
+  attachToDebugSession(application.vmServiceUri!);
   setTimeout(() => {
-    commands.executeCommand(
-      "vscode.open",
-      Uri.parse(`http://localhost:${port}/`)
-    );
+    commands.executeCommand("vscode.open", Uri.parse(application!.address!));
   }, 5000);
 
   debug.onDidTerminateDebugSession(() => {
