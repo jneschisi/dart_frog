@@ -113,8 +113,7 @@ export function isApplicationExitDeamonEvent(
     object.event === DevServerMessageName.applicationExit &&
     typeof object.params.applicationId === "string" &&
     typeof object.params.requestId === "string" &&
-    // TODO(alestiago): Check for the actual type of exitCode.
-    typeof object.params.exitCode === "string"
+    typeof object.params.exitCode === "number"
   );
 }
 
