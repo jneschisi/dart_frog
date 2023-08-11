@@ -9,15 +9,10 @@ import {
 } from "vscode";
 import { nearestDartFrogProject } from "../utils";
 import {
-  DaemonMessage,
   DartFrogApplication,
   DartFrogDaemon,
-  DartFrogDaemonEventEmitterTypes,
-  DeamonEvent,
-  DevServerMessageName,
   StartDaemonRequest,
   StartDeamonResponse,
-  isDeamonEvent,
 } from "../daemon";
 
 export const startDevServer = async (): Promise<void> => {
@@ -53,7 +48,7 @@ export const startDevServer = async (): Promise<void> => {
   if (!dartFrogDaemon.isReady) {
     const options: ProgressOptions = {
       location: 15,
-      title: `Starting Dart Frog daemon...`,
+      title: `Starting daemon...`,
     };
     await window.withProgress(options, async function () {
       await dartFrogDaemon.invoke(dartFrogProjectPath);

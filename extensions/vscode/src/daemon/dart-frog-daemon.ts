@@ -58,6 +58,21 @@ export class DartFrogDaemon {
 
   private _deamonMessagesEventEmitter = new EventEmitter();
 
+  private static decodeMessages(data: Buffer): DaemonMessage[] {
+    const stringData = data.toString();
+    const messages = stringData.split("\n").filter((s) => s.trim().length > 0);
+    const parsedMessages = messages.map((message) => JSON.parse(message));
+
+    let deamonMessages: DaemonMessage[] = [];
+    for (const parsedMessage of parsedMessages) {
+      for (const message of parsedMessage) {
+        deamonMessages.push(message as DaemonMessage);
+      }
+    }
+
+    return deamonMessages;
+  }
+
   // TODO(alestiago): Consider refactoring to allow filtering of messages by
   // their names.
   /**
@@ -152,7 +167,6 @@ export class DartFrogDaemon {
    */
   public async invoke(workingDirectory: string): Promise<void> {
     if (this.isReady) {
-      // TODO(alestiago): Check if can return without promise.
       return Promise.resolve();
     }
 
@@ -206,22 +220,6 @@ export class DartFrogDaemon {
         );
       }
     }
-  }
-
-  // TODO(alestiago): Consider moving this to a separate file.
-  private static decodeMessages(data: Buffer): DaemonMessage[] {
-    const stringData = data.toString();
-    const messages = stringData.split("\n").filter((s) => s.trim().length > 0);
-    const parsedMessages = messages.map((message) => JSON.parse(message));
-
-    let deamonMessages: DaemonMessage[] = [];
-    for (const parsedMessage of parsedMessages) {
-      for (const message of parsedMessage) {
-        deamonMessages.push(message as DaemonMessage);
-      }
-    }
-
-    return deamonMessages;
   }
 
   /**

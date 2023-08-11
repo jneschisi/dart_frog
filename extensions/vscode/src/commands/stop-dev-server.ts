@@ -12,7 +12,6 @@ import {
 } from "../daemon";
 
 export const stopDevServer = async (): Promise<void> => {
-  // TODO(alestiago): Check if daemon is running.
   const dartFrogDaemon = DartFrogDaemon.instance;
   const applications = dartFrogDaemon.applicationsRegistry.all;
 
