@@ -58,21 +58,6 @@ export class DartFrogDaemon {
 
   private _deamonMessagesEventEmitter = new EventEmitter();
 
-  private static decodeMessages(data: Buffer): DaemonMessage[] {
-    const stringData = data.toString();
-    const messages = stringData.split("\n").filter((s) => s.trim().length > 0);
-    const parsedMessages = messages.map((message) => JSON.parse(message));
-
-    let deamonMessages: DaemonMessage[] = [];
-    for (const parsedMessage of parsedMessages) {
-      for (const message of parsedMessage) {
-        deamonMessages.push(message as DaemonMessage);
-      }
-    }
-
-    return deamonMessages;
-  }
-
   // TODO(alestiago): Consider refactoring to allow filtering of messages by
   // their names.
   /**
@@ -206,7 +191,7 @@ export class DartFrogDaemon {
    * are emitted.
    */
   private stdoutDataListener(data: Buffer): void {
-    const deamonMessages = DartFrogDaemon.decodeMessages(data);
+    const deamonMessages = DaemonMessage.decode(data);
     for (const message of deamonMessages) {
       if (isDeamonEvent(message)) {
         this._deamonMessagesEventEmitter.emit(
