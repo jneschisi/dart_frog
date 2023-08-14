@@ -148,7 +148,6 @@ export class DartFrogDaemon {
    *
    * @param workingDirectory The working directory of the Dart Frog Daemon,
    * usually the root directory of the Dart Frog project.
-   * @returns True if the Dart Frog Daemon was successfully invoked.
    */
   public async invoke(workingDirectory: string): Promise<void> {
     if (this.isReady) {
