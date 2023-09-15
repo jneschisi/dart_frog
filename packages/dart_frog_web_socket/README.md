@@ -68,7 +68,7 @@ void main() {
 [dart_frog_link]: https://github.com/verygoodopensource/dart_frog
 [license_badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [license_link]: https://opensource.org/licenses/MIT
-[logo_white]: https://raw.githubusercontent.com/VeryGoodOpenSource/dart_frog/main/assets/dart_frog_logo_white.png#gh-dark-mode-only
+[logo]: https://raw.githubusercontent.com/VeryGoodOpenSource/dart_frog/main/assets/dart_frog_logo.png
 [pub_badge]: https://img.shields.io/pub/v/dart_frog_web_socket.svg
 [pub_link]: https://pub.dartlang.org/packages/dart_frog_web_socket
 [very_good_analysis_badge]: https://img.shields.io/badge/style-very_good_analysis-B22C89.svg
