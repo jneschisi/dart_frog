@@ -66,7 +66,7 @@ View the full documentation [here][documentation_link].
 [documentation_link]: https://verygoodopensource.github.io/dart_frog
 [license_badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [license_link]: https://opensource.org/licenses/MIT
-[logo]: https://raw.githubusercontent.com/VeryGoodOpenSource/dart_frog/main/assets/dart_frog_logo.png
+[logo]: https://raw.githubusercontent.com/VeryGoodOpenSource/dart_frog/alestiago/readme-single-logo/assets/dart_frog_logo.png
 [pub_badge]: https://img.shields.io/pub/v/dart_frog.svg
 [pub_link]: https://pub.dartlang.org/packages/dart_frog
 [very_good_analysis_badge]: https://img.shields.io/badge/style-very_good_analysis-B22C89.svg
