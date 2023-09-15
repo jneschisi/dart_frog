@@ -1,4 +1,4 @@
-[![Dart Frog Logo][logo]][dart_frog_logo_link]
+[![Dart Frog Logo][logo]][dart_frog_link]
 
 [![ci][ci_badge]][ci_link]
 [![coverage][coverage_badge]][ci_link]
