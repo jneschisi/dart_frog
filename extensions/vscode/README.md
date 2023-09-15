@@ -1,4 +1,4 @@
-[![Dart Frog Logo][logo_black]][dart_frog_link_light]
+[![Dart Frog Logo][logo]][dart_frog_logo_link]
 
 This is the [Dart Frog](https://dartfrog.vgv.dev/) [VS Code](https://code.visualstudio.com/) extension, which provides tools for effectively managing Dart Frog projects.
 

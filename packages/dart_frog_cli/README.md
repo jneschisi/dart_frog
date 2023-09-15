@@ -1,5 +1,4 @@
-[![Dart Frog Logo][logo_white]][dart_frog_link_dark]
-[![Dart Frog Logo][logo_black]][dart_frog_link_light]
+[![Dart Frog Logo][logo]][dart_frog_logo_link]
 
 [![ci][ci_badge]][ci_link]
 [![coverage][coverage_badge]][ci_link]
@@ -44,8 +43,7 @@ Learn more about it on the [official docs][docs_link].
 [dart_frog_link_light]: https://github.com/verygoodopensource/dart_frog#gh-light-mode-only
 [license_badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [license_link]: https://opensource.org/licenses/MIT
-[logo_black]: https://raw.githubusercontent.com/VeryGoodOpenSource/dart_frog/main/assets/dart_frog_logo_black.png#gh-light-mode-only
-[logo_white]: https://raw.githubusercontent.com/VeryGoodOpenSource/dart_frog/main/assets/dart_frog_logo_white.png#gh-dark-mode-only
+[logo]: https://raw.githubusercontent.com/VeryGoodOpenSource/dart_frog/main/assets/dart_frog_logo.png
 [pub_badge]: https://img.shields.io/pub/v/dart_frog_cli.svg
 [pub_link]: https://pub.dartlang.org/packages/dart_frog_cli
 [very_good_analysis_badge]: https://img.shields.io/badge/style-very_good_analysis-B22C89.svg

@@ -79,6 +79,15 @@ export const stopDevServer = async (): Promise<void> => {
       location: 15,
     },
     async (progress) => {
+      new Promise((resolve) =>
+        setTimeout(() => {
+          progress.report({
+            message: `Stopping server timeout`,
+            increment: 25,
+          });
+        }, 10000)
+      );
+
       progress.report({
         message: `Stopping server...`,
       });
